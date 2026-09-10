@@ -90,5 +90,5 @@
 → ✅ Manter padrão visual em tudo
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# ✅ FIM DAS REGRAS
+# ✅ FIM DAS REGRAS — EXECUTAR SEMPRE CONFORME ACIMA
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
