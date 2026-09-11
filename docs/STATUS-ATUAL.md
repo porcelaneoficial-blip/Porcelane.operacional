@@ -26,6 +26,9 @@ O Porcelane antigo em produção permanece separado e protegido.
 - Fila de produção.
 - Ordens de produção e ordens de corte criadas automaticamente quando o pedido entra em produção.
 - Painel de produção alimentado por dados reais do Supabase.
+- PCP inicial para acompanhamento de ordem de produção e ordem de corte.
+- Atualização de status, operador, data de corte, início e conclusão da produção.
+- Nova tabela `reservas_estoque` para reservar material por pedido/ordem de produção.
 - Instalação vinculada ao pedido e agenda operacional real.
 - Agenda de entregas/logística alimentada pela tabela `entregas`.
 - Painel financeiro alimentado por contas a receber, contas a pagar e comissões reais.
@@ -43,17 +46,18 @@ O Porcelane antigo em produção permanece separado e protegido.
 - Separação entre autenticação do GitHub e autenticação dos usuários do Porcelane documentada.
 - OneDrive definido como integração externa preferencial para documentos quando configurado; Supabase Storage permanece como armazenamento do aplicativo.
 - Márcia e IATA registrados como funções internas.
-- Service worker atualizado para v5 e preparado para refletir painéis reais sem reconstrução do app no Bolt.
+- Service worker atualizado para v6 e preparado para carregar o módulo operacional sem reconstrução do app no Bolt.
 - Guardas adicionais do fluxo operacional aplicadas: medição antes da conferência/produção, conferência antes da produção, produção antes da instalação e instalação + data antes da finalização.
 - Bloqueio de retorno de etapa no fluxo operacional.
 - Exemplos financeiros, estoque, produção, instalação, logística e documentos foram substituídos dinamicamente por dados reais quando disponíveis.
 - Migration comercial/medição/auditoria aplicada no Supabase ativo `jwbbhqmyjrmfkdnzfyhl` e registrada no repositório.
+- Migration de PCP aplicada com `reservas_estoque` para preparar reserva e consumo de materiais por pedido/produção.
 
 ## 4. O que ainda precisa ser concluído antes de produção real
 
 1. Supabase Auth para usuários e perfis.
 2. RLS/policies adequadas ao acesso por perfil; a configuração atual é single-tenant sem login.
-3. PCP/produção real: corte, paginação de chapas, sobras, veios, fotos e consumo/reserva de estoque.
+3. PCP avançado: paginação de chapas, sobras, veios, fotos, consumo efetivo e movimentação de estoque.
 4. Acabamento com etapas próprias e apontamento de qualidade.
 5. Logística/entrega com protocolos e comprovantes.
 6. Financeiro real com geração de parcelas, Pix, cartão, recebimentos e conciliação.
