@@ -3,7 +3,7 @@
 // apenas esta configuração e habilitar módulos diferentes.
 
 export const APP_CONFIG = {
-  appId: 'porcelane-operacional',
+  appId: 'porcelane-operational',
   nome: 'Porcelane',
   segmento: 'marmoraria',
   ambiente: 'production',
@@ -15,6 +15,7 @@ export const APP_CONFIG = {
     pedidos: true,
     medicao: true,
     projetos: true,
+    desenho: true,
     producao: true,
     acabamento: true,
     logistica: true,
@@ -24,6 +25,7 @@ export const APP_CONFIG = {
     rh: true,
     documentos: true,
     assistente: true,
+    configuracoes: true,
   },
   integrations: {
     supabase: true,
