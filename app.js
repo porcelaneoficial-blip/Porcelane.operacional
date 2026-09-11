@@ -4,285 +4,59 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-const DB_STATUS_MAP = {
-  'Pedido recebido': 'aberto',
-  'Conferência': 'conferencia',
-  'Em produção': 'producao',
-  'Instalação': 'instalacao',
-  'Finalizado': 'finalizado'
-};
-const UI_STATUS_MAP = {
-  'aberto': 'Pedido recebido',
-  'conferencia': 'Conferência',
-  'producao': 'Em produção',
-  'instalacao': 'Instalação',
-  'finalizado': 'Finalizado'
-};
-
+const DB_STATUS_MAP = { 'Pedido recebido':'aberto', 'Conferência':'conferencia', 'Em produção':'producao', 'Instalação':'instalacao', 'Finalizado':'finalizado' };
+const UI_STATUS_MAP = { aberto:'Pedido recebido', conferencia:'Conferência', producao:'Em produção', instalacao:'Instalação', finalizado:'Finalizado' };
 const views=[...document.querySelectorAll('.view')];
 const nav=[...document.querySelectorAll('.nav-item')];
 const title=document.getElementById('page-title');
 const names={dashboard:'Visão geral',orcamentos:'Orçamentos',pedidos:'Pedidos',medicao:'Medição / Conferência',desenho:'Desenho técnico',producao:'Produção',acabamento:'Acabamento',logistica:'Carregamento / Logística',instalacao:'Instalação',clientes:'Clientes',financeiro:'Financeiro',estoque:'Estoque',rh:'RH / Administrativo',documentos:'Documentos',assistente:'Assistente',configuracoes:'Configurações'};
-function go(view){views.forEach(v=>v.classList.toggle('active-view',v.id===view));nav.forEach(n=>n.classList.toggle('active',n.dataset.view===view));title.textContent=names[view]||'Visão geral';window.scrollTo({top:0,behavior:'smooth'});history.replaceState(null,'','#'+view)}
-nav.forEach(n=>n.addEventListener('click',()=>go(n.dataset.view)));
-document.querySelectorAll('[data-view-link]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.viewLink)));
-const today=document.getElementById('today'); if(today) today.textContent=new Intl.DateTimeFormat('pt-BR',{dateStyle:'full'}).format(new Date());
-
 const stages=['Pedido recebido','Conferência','Em produção','Instalação','Finalizado'];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money=v=>Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const todayISO=()=>new Date().toISOString().slice(0,10);
+function go(view){views.forEach(v=>v.classList.toggle('active-view',v.id===view));nav.forEach(n=>n.classList.toggle('active',n.dataset.view===view));if(title)title.textContent=names[view]||'Visão geral';window.scrollTo({top:0,behavior:'smooth'});history.replaceState(null,'','#'+view)}
+nav.forEach(n=>n.addEventListener('click',()=>go(n.dataset.view)));
+document.querySelectorAll('[data-view-link]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.viewLink)));
+const today=document.getElementById('today');if(today)today.textContent=new Intl.DateTimeFormat('pt-BR',{dateStyle:'full'}).format(new Date());
+let orders=[];let budgets=[];let clients=[];
 
-let orders=[];
-let budgets=[];
-let clients=[];
+function mapOrderFromDB(row){return{id:row.numero||row.id,dbId:row.id,client:row.cliente?.nome||'',job:row.obra?.nome||'',status:UI_STATUS_MAP[row.status]||'Pedido recebido',measurement:row.data_medicao||'',measurementApproved:!!row.medicao_aprovada,approvalDate:row.data_aprovacao_medicao||'',install:row.instalacoes?.[0]?.data_agendada||'',locked:row.status==='finalizado'} }
+function mapBudgetFromDB(row){return{id:row.numero||row.id,dbId:row.id,client:row.cliente?.nome||'',job:row.obra?.nome||'',value:Number(row.valor_total||0),area:Number(row.area_m2||0),priceM2:Number(row.preco_m2||0),discount:Number(row.desconto||0),margin:Number(row.margem_percentual||0),status:row.status||'rascunho',payment:row.forma_pagamento||'',delivery:row.tipo_entrega||''}}
+function mapClientFromDB(row){return{dbId:row.id,name:row.nome,phone:row.telefone||'',note:row.observacoes||''}}
 
-function mapOrderFromDB(row) {
-  const clientName = row.cliente?.nome || '';
-  const obraName = row.obra?.nome || '';
-  const uiStatus = UI_STATUS_MAP[row.status] || 'Pedido recebido';
-  const installDate = row.instalacoes?.[0]?.data_agendada || '';
-  return {
-    id: row.numero || row.id,
-    dbId: row.id,
-    client: clientName,
-    job: obraName,
-    status: uiStatus,
-    measurement: row.data_medicao || '',
-    install: installDate,
-    locked: uiStatus === 'Finalizado'
-  };
-}
+async function loadOrders(){const {data,error}=await supabase.from('pedidos').select('id,numero,status,data_medicao,medicao_aprovada,data_aprovacao_medicao,cliente_id,obra_id,cliente:clientes(nome),obra:obras(nome),instalacoes(data_agendada)').order('criado_em',{ascending:false});if(error){console.error(error);return}orders=(data||[]).map(mapOrderFromDB);renderOrders();renderMetrics()}
+async function loadBudgets(){const {data,error}=await supabase.from('orcamentos').select('id,numero,status,valor_total,area_m2,preco_m2,desconto,margem_percentual,forma_pagamento,tipo_entrega,cliente:clientes(nome),obra:obras(nome)').order('criado_em',{ascending:false});if(error){console.error(error);return}budgets=(data||[]).map(mapBudgetFromDB);renderMetrics();renderBudgetsTable()}
+async function loadClients(){const {data,error}=await supabase.from('clientes').select('id,nome,telefone,observacoes').order('created_at',{ascending:false});if(error){console.error(error);return}clients=(data||[]).map(mapClientFromDB)}
 
-function mapBudgetFromDB(row) {
-  const clientName = row.cliente?.nome || '';
-  const obraName = row.obra?.nome || '';
-  return {
-    id: row.numero || row.id,
-    dbId: row.id,
-    client: clientName,
-    job: obraName,
-    value: row.valor_total || 0,
-    status: row.status || 'rascunho'
-  };
-}
+function renderBudgetsTable(){const tbody=document.getElementById('budgets-table');if(!tbody)return;if(!budgets.length){tbody.innerHTML='<tr><td colspan="6" class="empty">Nenhum orçamento cadastrado. Clique em "Novo orçamento".</td></tr>';return}tbody.innerHTML=budgets.map(b=>`<tr><td>${esc(b.id)}</td><td>${esc(b.client)}</td><td>${esc(b.job)}</td><td>${b.area?b.area.toLocaleString('pt-BR')+' m²':'—'}</td><td>${money(b.value)}</td><td><span class="badge ${b.status==='aprovado'?'green':'amber'}">${esc(b.status)}</span></td></tr>`).join('')}
+function card(o){return `<div class="order-card" data-order="${esc(o.id)}"><strong>${esc(o.id)}</strong><span>${esc(o.client)}</span><span>${esc(o.job)}</span>${o.measurement?`<small class="ok">Medição ${o.measurementApproved?'aprovada':'registrada'}</small>`:'<small class="warning">Medição pendente</small>'}<small>${o.locked?'Pedido protegido':'Clique para abrir'}</small></div>`}
+function renderOrders(){const board=document.getElementById('orders-board');if(board){board.innerHTML=stages.map(stage=>`<div class="kanban-col"><h4>${stage}<em>${orders.filter(o=>o.status===stage).length}</em></h4>${orders.filter(o=>o.status===stage).map(card).join('')||'<div class="empty">Nenhum pedido</div>'}</div>`).join('');document.querySelectorAll('[data-order]').forEach(c=>c.onclick=()=>openOrder(c.dataset.order))}const recent=document.getElementById('recent-orders');if(recent)recent.innerHTML=orders.slice(0,4).map(card).join('');renderOperationalQueues()}
+function renderMetrics(){const active=orders.filter(o=>o.status!=='Finalizado').length;const production=orders.filter(o=>o.status==='Em produção').length;const installs=orders.filter(o=>o.status==='Instalação').length;const budgetsOpen=budgets.filter(b=>!['aprovado','recusado'].includes(b.status)).length;const m=document.getElementById('dashboard-metrics');if(m)m.innerHTML=[['Pedidos em andamento',active,'Atualizados agora'],['Em produção',production,'Acompanhamento da fábrica'],['Instalações próximas',installs,'Agenda operacional'],['Orçamentos abertos',budgetsOpen,'Aguardando retorno']].map(x=>`<article class="metric"><span>${x[0]}</span><strong>${x[1]}</strong><small>${x[2]}</small></article>`).join('')}
+function modal(titleText,body,onSubmit){const old=document.getElementById('porcelane-modal');if(old)old.remove();const d=document.createElement('dialog');d.id='porcelane-modal';d.innerHTML=`<form method="dialog" class="panel" style="min-width:min(680px,92vw)"><div class="panel-head"><h3>${titleText}</h3><button value="cancel">×</button></div>${body}<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px"><button value="cancel">Cancelar</button><button class="primary" id="modal-ok" value="default">Salvar</button></div></form>`;document.body.appendChild(d);d.querySelector('#modal-ok').onclick=async e=>{e.preventDefault();const ok=await onSubmit(d);if(ok)d.close()};d.showModal()}
+async function audit(tabela,registro_id,acao,dados={}){const {error}=await supabase.from('auditoria_operacional').insert({tabela,registro_id,acao,dados});if(error)console.warn('Auditoria:',error.message)}
 
-function mapClientFromDB(row) {
-  return {
-    dbId: row.id,
-    name: row.nome,
-    phone: row.telefone || '',
-    note: row.observacoes || ''
-  };
-}
+function stageIndex(status){return stages.indexOf(status)}
+function canAdvance(current,next){return stageIndex(next)>=stageIndex(current)}
+function openOrder(id){const o=orders.find(x=>x.id===id);if(!o)return;const canRelease=!!o.measurement&&o.measurementApproved;modal(`Pedido ${o.id}`,`<p><strong>${esc(o.client)}</strong> · ${esc(o.job)}</p><label>Status<select id="m-status">${stages.map(s=>`<option ${s===o.status?'selected':''}>${s}</option>`).join('')}</select></label><label>Data de medição<input id="m-measure" type="date" value="${o.measurement}"></label><label><input id="m-approved" type="checkbox" ${o.measurementApproved?'checked':''}> Medição conferida e aprovada</label><label>Instalação<input id="m-install" type="date" value="${o.install}"></label><p class="${canRelease?'ok':'warning'}">${canRelease?'Medição aprovada: pedido apto para liberação.':'A produção só pode ser liberada após registrar e aprovar a medição.'}</p>`,async d=>{const ns=d.querySelector('#m-status').value,nm=d.querySelector('#m-measure').value,approved=d.querySelector('#m-approved').checked,installDate=d.querySelector('#m-install').value;if(o.locked){alert('Este pedido está fechado e protegido contra alteração.');return false}if(!canAdvance(o.status,ns)){alert('O fluxo não permite voltar uma etapa.');return false}if(approved&&!nm){alert('Aprovação exige data de medição.');return false}if((ns==='Em produção'||ns==='Instalação')&&(!nm||!approved)){alert('Não é possível liberar produção/instalação sem medição registrada e aprovada.');return false}if(ns==='Instalação'&&!installDate){alert('Informe a data de instalação.');return false}if(ns==='Finalizado'&&(!nm||!approved||!installDate)){alert('Para finalizar, registre/aprove a medição e informe a instalação.');return false}const patch={status:DB_STATUS_MAP[ns],data_medicao:nm||null,medicao_aprovada:approved,data_aprovacao_medicao:approved?(o.approvalDate||todayISO()):null};const {error}=await supabase.from('pedidos').update(patch).eq('id',o.dbId);if(error){alert('Erro ao atualizar pedido: '+error.message);return false}if(installDate){const {data:existing}=await supabase.from('instalacoes').select('id').eq('pedido_id',o.dbId).maybeSingle();if(existing){const {error:e}=await supabase.from('instalacoes').update({data_agendada:installDate,status:ns==='Finalizado'?'concluida':'agendada'}).eq('id',existing.id);if(e){alert('Erro ao atualizar instalação: '+e.message);return false}}else{const {error:e}=await supabase.from('instalacoes').insert({pedido_id:o.dbId,data_agendada:installDate,status:'agendada'});if(e){alert('Erro ao criar instalação: '+e.message);return false}}}await audit('pedidos',o.dbId,'atualizacao_status',{de:o.status,para:ns,medicao:nm||null,medicao_aprovada:approved});await loadOrders();return true})}
 
-async function loadOrders() {
-  const { data, error } = await supabase
-    .from('pedidos')
-    .select(`
-      id, numero, status, data_medicao, cliente_id, obra_id,
-      cliente:clientes(nome),
-      obra:obras(nome),
-      instalacoes(data_agendada)
-    `)
-    .order('criado_em', { ascending: false });
-  if (error) { console.error('Erro ao carregar pedidos:', error); return; }
-  orders = (data || []).map(mapOrderFromDB);
-  renderOrders();
-  renderMetrics();
-}
+async function ensureClient(name){const {data:existing}=await supabase.from('clientes').select('id').ilike('nome',name).maybeSingle();if(existing)return existing.id;const {data,error}=await supabase.from('clientes').insert({nome:name}).select('id').single();if(error){console.error(error);return null}return data.id}
+async function ensureObra(name,clientId){const {data:existing}=await supabase.from('obras').select('id').ilike('nome',name).eq('cliente_id',clientId).maybeSingle();if(existing)return existing.id;const {data,error}=await supabase.from('obras').insert({nome:name,cliente_id:clientId}).select('id').single();if(error){console.error(error);return null}return data.id}
 
-async function loadBudgets() {
-  const { data, error } = await supabase
-    .from('orcamentos')
-    .select(`
-      id, numero, status, valor_total,
-      cliente:clientes(nome),
-      obra:obras(nome)
-    `)
-    .order('criado_em', { ascending: false });
-  if (error) { console.error('Erro ao carregar orçamentos:', error); return; }
-  budgets = (data || []).map(mapBudgetFromDB);
-  renderMetrics();
-  renderBudgetsTable();
-}
+function newOrder(){modal('Novo pedido',`<label>Cliente<input id="f-client" required placeholder="Nome do cliente"></label><label>Obra / local<input id="f-job" required placeholder="Ex.: Casa Forte"></label><label>Tipo de pedido<select id="f-type"><option value="retirada">Retirada</option><option value="entrega_sem_instalacao">Entrega sem instalação</option><option value="entrega_instalacao">Entrega + instalação</option></select></label><label>Data de medição<input id="f-measure" type="date"></label><label>Data de instalação<input id="f-install" type="date"></label>`,async d=>{const client=d.querySelector('#f-client').value.trim(),job=d.querySelector('#f-job').value.trim();if(!client||!job)return false;const clientId=await ensureClient(client);if(!clientId){alert('Erro ao cadastrar cliente.');return false}const obraId=await ensureObra(job,clientId);if(!obraId){alert('Erro ao cadastrar obra.');return false}const measure=d.querySelector('#f-measure').value||null;const type=d.querySelector('#f-type').value;const installDate=d.querySelector('#f-install').value||null;const nextNum=`PED-${String(Date.now()).slice(-6)}`;const {data:ped,error}=await supabase.from('pedidos').insert({numero:nextNum,cliente_id:clientId,obra_id:obraId,status:'aberto',tipo:type,data_medicao:measure,medicao_aprovada:false,forma_pagamento:'40% Pix + 60% cartão até 3x',tipo_entrega:type}).select('id').single();if(error){alert('Erro ao criar pedido: '+error.message);return false}if(installDate){const {error:e}=await supabase.from('instalacoes').insert({pedido_id:ped.id,data_agendada:installDate,status:'agendada'});if(e){alert('Pedido criado, mas a instalação não foi criada: '+e.message)}}await audit('pedidos',ped.id,'criacao',{numero:nextNum});await loadOrders();go('pedidos');return true})}
 
-async function loadClients() {
-  const { data, error } = await supabase
-    .from('clientes')
-    .select('id, nome, telefone, observacoes')
-    .order('created_at', { ascending: false });
-  if (error) { console.error('Erro ao carregar clientes:', error); return; }
-  clients = (data || []).map(mapClientFromDB);
-}
+function newBudget(){modal('Novo orçamento',`<label>Cliente<input id="b-client" required></label><label>Obra<input id="b-job" required></label><label>M²<input id="b-m2" type="number" min="0" step="0.01" placeholder="Ex.: 12,50"></label><label>Preço por m²<input id="b-price" type="number" min="0" step="0.01"></label><label>Valor total<input id="b-value" type="number" min="0" step="0.01"></label><label>Desconto<input id="b-discount" type="number" min="0" step="0.01" value="0"></label><label>Margem alvo (%)<input id="b-margin" type="number" min="0" max="100" step="0.1" value="50"></label><label>Forma de pagamento<select id="b-payment"><option>40% Pix + 60% cartão até 3x</option><option>Pix</option><option>Cartão</option><option>Outro</option></select></label><label>Tipo de entrega<select id="b-delivery"><option value="retirada">Retirada</option><option value="entrega_sem_instalacao">Entrega sem instalação</option><option value="entrega_instalacao">Entrega + instalação</option></select></label><p class="warning">A taxa de medição de R$ 150,00 deve ser aplicada quando a Porcelane fizer a medição e creditada se o pedido for fechado.</p>`,async d=>{const client=d.querySelector('#b-client').value.trim(),job=d.querySelector('#b-job').value.trim();if(!client||!job)return false;const clientId=await ensureClient(client);if(!clientId){alert('Erro ao cadastrar cliente.');return false}const obraId=await ensureObra(job,clientId);if(!obraId){alert('Erro ao cadastrar obra.');return false}const area=parseFloat(d.querySelector('#b-m2').value)||0;const price=parseFloat(d.querySelector('#b-price').value)||0;let value=parseFloat(d.querySelector('#b-value').value)||0;if(!value&&area&&price)value=area*price;const discount=parseFloat(d.querySelector('#b-discount').value)||0;const nextNum=`ORC-${String(Date.now()).slice(-6)}`;const {data:orc,error}=await supabase.from('orcamentos').insert({numero:nextNum,cliente_id:clientId,obra_id:obraId,area_m2:area||null,preco_m2:price||null,valor_total:value,desconto:discount,margem_percentual:parseFloat(d.querySelector('#b-margin').value)||50,forma_pagamento:d.querySelector('#b-payment').value,tipo_entrega:d.querySelector('#b-delivery').value,status:'rascunho'}).select('id').single();if(error){alert('Erro ao criar orçamento: '+error.message);return false}await audit('orcamentos',orc.id,'criacao',{numero:nextNum,valor_total:value,area_m2:area,preco_m2:price});await loadBudgets();alert('Orçamento criado.');return true})}
 
-function renderBudgetsTable() {
-  const tbody = document.getElementById('budgets-table');
-  if (!tbody) return;
-  if (!budgets.length) {
-    tbody.innerHTML = '<tr><td colspan="6" class="empty">Nenhum orçamento cadastrado. Clique em "Novo orçamento".</td></tr>';
-    return;
-  }
-  tbody.innerHTML = budgets.map(b => `<tr><td>${esc(b.id)}</td><td>${esc(b.client)}</td><td>${esc(b.job)}</td><td>—</td><td>${b.value ? 'R$ ' + Number(b.value).toFixed(2).replace('.',',') : '—'}</td><td><span class="badge ${b.status==='aprovado'?'green':'amber'}">${esc(b.status)}</span></td></tr>`).join('');
-}
+async function approveBudget(id){const b=budgets.find(x=>x.id===id);if(!b)return;const ok=confirm(`Aprovar ${b.id} por ${money(b.value)} e transformar em pedido?`);if(!ok)return;const {data:ped,error}=await supabase.from('pedidos').insert({numero:`PED-${String(Date.now()).slice(-6)}`,cliente_id:(await supabase.from('orcamentos').select('cliente_id,obra_id,projeto_id').eq('id',b.dbId).single()).data?.cliente_id,obra_id:(await supabase.from('orcamentos').select('cliente_id,obra_id,projeto_id').eq('id',b.dbId).single()).data?.obra_id,projeto_id:(await supabase.from('orcamentos').select('cliente_id,obra_id,projeto_id').eq('id',b.dbId).single()).data?.projeto_id,orcamento_id:b.dbId,status:'aberto',valor_total:b.value,desconto:b.discount,forma_pagamento:b.payment,tipo_entrega:b.delivery,medicao_aprovada:false}).select('id').single();if(error){alert('Erro ao converter orçamento em pedido: '+error.message);return}const {error:e}=await supabase.from('orcamentos').update({status:'aprovado',aprovado_em:new Date().toISOString()}).eq('id',b.dbId);if(e){alert('Pedido criado, mas orçamento não foi marcado como aprovado: '+e.message);return}await audit('orcamentos',b.dbId,'aprovacao',{pedido_id:ped.id});await loadBudgets();await loadOrders();alert('Orçamento aprovado e pedido criado com os dados comerciais herdados.');}
 
-function card(o){return `<div class="order-card" data-order="${esc(o.id)}"><strong>${esc(o.id)}</strong><span>${esc(o.client)}</span><span>${esc(o.job)}</span>${o.measurement?'<small class="ok">Medição registrada</small>':'<small class="warning">Medição pendente</small>'}<small>${o.locked?'Pedido protegido':'Clique para abrir'}</small></div>`}
-function renderOrders(){const board=document.getElementById('orders-board');if(!board)return;board.innerHTML=stages.map(stage=>`<div class="kanban-col"><h4>${stage}<em>${orders.filter(o=>o.status===stage).length}</em></h4>${orders.filter(o=>o.status===stage).map(card).join('')||'<div class="empty">Nenhum pedido</div>'}</div>`).join('');const recent=document.getElementById('recent-orders');if(recent)recent.innerHTML=orders.slice(0,4).map(card).join('');document.querySelectorAll('[data-order]').forEach(c=>c.onclick=()=>openOrder(c.dataset.order));renderOperationalQueues()}
-function renderMetrics(){const active=orders.filter(o=>o.status!=='Finalizado').length;const production=orders.filter(o=>o.status==='Em produção').length;const installs=orders.filter(o=>o.status==='Instalação').length;const budgetsOpen=budgets.filter(b=>b.status!=='aprovado'&&b.status!=='recusado').length;const m=document.getElementById('dashboard-metrics');if(m)m.innerHTML=[['Pedidos em andamento',active,'Atualizados agora'],['Em produção',production,'Acompanhamento da fábrica'],['Instalações próximas',installs,'Próximos 7 dias'],['Orçamentos abertos',budgetsOpen,'Aguardando retorno']].map(x=>`<article class="metric"><span>${x[0]}</span><strong>${x[1]}</strong><small>${x[2]}</small></article>`).join('')}
-function modal(title,body,onSubmit){const old=document.getElementById('porcelane-modal');if(old)old.remove();const d=document.createElement('dialog');d.id='porcelane-modal';d.innerHTML=`<form method="dialog" class="panel" style="min-width:min(620px,92vw)"><div class="panel-head"><h3>${title}</h3><button value="cancel">×</button></div>${body}<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px"><button value="cancel">Cancelar</button><button class="primary" id="modal-ok" value="default">Salvar</button></div></form>`;document.body.appendChild(d);d.querySelector('#modal-ok').onclick=e=>{e.preventDefault();if(onSubmit(d))d.close()};d.showModal()}
-
-function openOrder(id){
-  const o=orders.find(x=>x.id===id);
-  if(!o)return;
-  const canProduce=!!o.measurement;
-  modal(`Pedido ${o.id}`,`<p><strong>${esc(o.client)}</strong> · ${esc(o.job)}</p><label>Status<select id="m-status">${stages.map(s=>`<option ${s===o.status?'selected':''}>${s}</option>`).join('')}</select></label><label>Data de medição<input id="m-measure" type="date" value="${o.measurement||''}"></label><label>Instalação<input id="m-install" type="date" value="${o.install||''}"></label><p class="${canProduce?'ok':'warning'}">${canProduce?'Medição registrada: produção pode ser liberada.':'Sem data de medição: produção permanece BLOQUEADA.'}</p>`,async d=>{
-    const ns=d.querySelector('#m-status').value;
-    const nm=d.querySelector('#m-measure').value;
-    if(o.locked){alert('Este pedido está fechado e protegido contra alteração.');return false}
-    if((ns==='Em produção'||ns==='Instalação')&&!nm){alert('Não é possível avançar este pedido para produção ou instalação sem uma data de medição registrada.');return false}
-    if(ns==='Finalizado'&&(!nm||!d.querySelector('#m-install').value)){alert('Para finalizar, registre a medição e a data de instalação.');return false}
-    const dbStatus = DB_STATUS_MAP[ns] || 'aberto';
-    const { error: updateError } = await supabase
-      .from('pedidos')
-      .update({ status: dbStatus, data_medicao: nm || null })
-      .eq('id', o.dbId);
-    if (updateError) { alert('Erro ao atualizar pedido: ' + updateError.message); return false }
-    const installDate = d.querySelector('#m-install').value;
-    const { data: existingInst } = await supabase
-      .from('instalacoes')
-      .select('id')
-      .eq('pedido_id', o.dbId)
-      .maybeSingle();
-    if (installDate) {
-      if (existingInst) {
-        await supabase.from('instalacoes').update({ data_agendada: installDate, status: ns==='Finalizado'?'concluida':'agendada' }).eq('id', existingInst.id);
-      } else {
-        await supabase.from('instalacoes').insert({ pedido_id: o.dbId, data_agendada: installDate, status: 'agendada' });
-      }
-    }
-    await loadOrders();
-    return true;
-  });
-}
-
-async function ensureClient(name) {
-  const { data: existing } = await supabase
-    .from('clientes')
-    .select('id')
-    .ilike('nome', name)
-    .maybeSingle();
-  if (existing) return existing.id;
-  const { data, error } = await supabase
-    .from('clientes')
-    .insert({ nome: name })
-    .select('id')
-    .single();
-  if (error) { console.error('Erro ao criar cliente:', error); return null; }
-  return data.id;
-}
-
-async function ensureObra(name, clientId) {
-  const { data: existing } = await supabase
-    .from('obras')
-    .select('id')
-    .ilike('nome', name)
-    .maybeSingle();
-  if (existing) return existing.id;
-  const { data, error } = await supabase
-    .from('obras')
-    .insert({ nome: name, cliente_id: clientId })
-    .select('id')
-    .single();
-  if (error) { console.error('Erro ao criar obra:', error); return null; }
-  return data.id;
-}
-
-function newOrder(){modal('Novo pedido',`<label>Cliente<input id="f-client" required placeholder="Nome do cliente"></label><label>Obra / local<input id="f-job" required placeholder="Ex.: Casa Forte"></label><label>Data de medição<input id="f-measure" type="date"></label><label>Data de instalação<input id="f-install" type="date"></label>`,async d=>{
-  const client=d.querySelector('#f-client').value.trim(),job=d.querySelector('#f-job').value.trim();
-  if(!client||!job)return false;
-  const clientId = await ensureClient(client);
-  if (!clientId) { alert('Erro ao cadastrar cliente.'); return false; }
-  const obraId = await ensureObra(job, clientId);
-  if (!obraId) { alert('Erro ao cadastrar obra.'); return false; }
-  const nextNum = `PED-${String(Date.now()).slice(-6)}`;
-  const { data: ped, error: pedError } = await supabase
-    .from('pedidos')
-    .insert({
-      numero: nextNum,
-      cliente_id: clientId,
-      obra_id: obraId,
-      status: 'aberto',
-      data_medicao: d.querySelector('#f-measure').value || null
-    })
-    .select('id')
-    .single();
-  if (pedError) { alert('Erro ao criar pedido: ' + pedError.message); return false; }
-  const installDate = d.querySelector('#f-install').value;
-  if (installDate) {
-    await supabase.from('instalacoes').insert({ pedido_id: ped.id, data_agendada: installDate, status: 'agendada' });
-  }
-  await loadOrders();
-  go('pedidos');
-  return true;
-})}
-
-function newBudget(){modal('Novo orçamento',`<label>Cliente<input id="b-client" required></label><label>Obra<input id="b-job" required></label><label>M²<input id="b-m2" type="number" min="0" step="0.01"></label><label>Valor<input id="b-value" type="number" min="0" step="0.01"></label>`,async d=>{
-  const client=d.querySelector('#b-client').value.trim(),job=d.querySelector('#b-job').value.trim();
-  if(!client||!job)return false;
-  const clientId = await ensureClient(client);
-  if (!clientId) { alert('Erro ao cadastrar cliente.'); return false; }
-  const obraId = await ensureObra(job, clientId);
-  if (!obraId) { alert('Erro ao cadastrar obra.'); return false; }
-  const value = parseFloat(d.querySelector('#b-value').value) || 0;
-  const nextNum = `ORC-${String(Date.now()).slice(-6)}`;
-  const { error } = await supabase
-    .from('orcamentos')
-    .insert({
-      numero: nextNum,
-      cliente_id: clientId,
-      obra_id: obraId,
-      valor_total: value,
-      status: 'rascunho'
-    });
-  if (error) { alert('Erro ao criar orçamento: ' + error.message); return false; }
-  await loadBudgets();
-  alert('Orçamento criado.');
-  return true;
-})}
-
-function newClient(){modal('Novo cliente',`<label>Nome<input id="c-name" required></label><label>Telefone<input id="c-phone"></label><label>Obra / observação<textarea id="c-note"></textarea></label>`,async d=>{
-  const name=d.querySelector('#c-name').value.trim();
-  if(!name)return false;
-  const { error } = await supabase
-    .from('clientes')
-    .insert({
-      nome: name,
-      telefone: d.querySelector('#c-phone').value || null,
-      observacoes: d.querySelector('#c-note').value || null
-    });
-  if (error) { alert('Erro ao cadastrar cliente: ' + error.message); return false; }
-  await loadClients();
-  alert('Cliente cadastrado.');
-  return true;
-})}
-
-function renderOperationalQueues(){
- const measurement=document.querySelector('#medicao .panel-body')||document.querySelector('#medicao .panel');
- const production=document.querySelector('#producao .panel-body')||document.querySelector('#producao .panel');
- if(measurement){let box=document.getElementById('dynamic-measurement-queue');if(!box){box=document.createElement('div');box.id='dynamic-measurement-queue';box.className='list';measurement.appendChild(box)}box.innerHTML=orders.filter(o=>o.status!=='Finalizado').map(o=>`<div class="list-row"><strong>${esc(o.id)}</strong><span>${esc(o.client)} · ${esc(o.job)}</span><span class="badge ${o.measurement?'green':'amber'}">${o.measurement?'Medição registrada':'Aguardando medição'}</span><button data-open-order="${esc(o.id)}">${o.measurement?'Abrir':'Registrar'}</button></div>`).join('')||'<div class="empty">Nenhum pedido pendente.</div>';box.querySelectorAll('[data-open-order]').forEach(b=>b.onclick=()=>openOrder(b.dataset.openOrder))}
- if(production){let box=document.getElementById('dynamic-production-queue');if(!box){box=document.createElement('div');box.id='dynamic-production-queue';box.className='list';production.appendChild(box)}box.innerHTML=orders.filter(o=>o.status==='Em produção').map(o=>`<div class="list-row"><strong>${esc(o.id)}</strong><span>${esc(o.client)} · ${esc(o.job)}</span><span class="badge green">Liberado para produção</span><button data-open-order="${esc(o.id)}">Abrir</button></div>`).join('')||'<div class="empty">Nenhum pedido liberado para produção.</div>';box.querySelectorAll('[data-open-order]').forEach(b=>b.onclick=()=>openOrder(b.dataset.openOrder))}
-}
-
-renderOrders();renderMetrics();renderBudgetsTable();
 document.getElementById('new-order')?.addEventListener('click',newOrder);document.getElementById('new-order-2')?.addEventListener('click',newOrder);document.getElementById('new-budget')?.addEventListener('click',newBudget);
-const clientButtons=[...document.querySelectorAll('#clientes .primary')];clientButtons.forEach(b=>b.addEventListener('click',newClient));
-document.querySelectorAll('[data-assist]').forEach(b=>b.addEventListener('click',()=>{const key=b.dataset.assist;const result=document.getElementById('assistant-result');if(!result)return;const text={pedidos:`Há ${orders.filter(o=>o.status!=='Finalizado').length} pedidos em andamento.`,medicao:`Há ${orders.filter(o=>!o.measurement).length} pedidos sem data de medição. Eles não podem ser liberados para produção.`,producao:`Há ${orders.filter(o=>o.status==='Em produção').length} pedidos em produção.`,financeiro:'Use os lançamentos do módulo Financeiro para controlar contas a receber, parcelas e comissões.'};result.textContent=text[key]||'Tudo certo.'}));
-document.getElementById('clear-local')?.addEventListener('click',async()=>{if(confirm('Recarregar todos os dados do banco de dados?')){await Promise.all([loadOrders(),loadBudgets(),loadClients()])}});
+const clientButtons=[...document.querySelectorAll('#clientes .primary')];clientButtons.forEach(b=>b.addEventListener('click',()=>newClient()));
+function newClient(){modal('Novo cliente',`<label>Nome<input id="c-name" required></label><label>Telefone<input id="c-phone"></label><label>Observação<textarea id="c-note"></textarea></label>`,async d=>{const name=d.querySelector('#c-name').value.trim();if(!name)return false;const {data,error}=await supabase.from('clientes').insert({nome:name,telefone:d.querySelector('#c-phone').value||null,observacoes:d.querySelector('#c-note').value||null}).select('id').single();if(error){alert('Erro ao cadastrar cliente: '+error.message);return false}await audit('clientes',data.id,'criacao',{nome:name});await loadClients();alert('Cliente cadastrado.');return true})}
 
-const finish=[];const fl=document.getElementById('finish-list');if(fl)fl.innerHTML=orders.filter(o=>o.status==='Em produção'||o.status==='Instalação').map(o=>`<div class="list-row"><strong>${esc(o.id)}</strong><span>${esc(o.client)} · ${esc(o.job)}</span><span class="badge amber">Em andamento</span></div>`).join('')||'<div class="empty">Nenhum acabamento em andamento.</div>';
+function renderOperationalQueues(){const measurement=document.querySelector('#medicao .panel-body')||document.querySelector('#medicao .panel');const production=document.querySelector('#producao .panel-body')||document.querySelector('#producao .panel');if(measurement){let box=document.getElementById('dynamic-measurement-queue');if(!box){box=document.createElement('div');box.id='dynamic-measurement-queue';box.className='list';measurement.appendChild(box)}box.innerHTML=orders.filter(o=>o.status!=='Finalizado').map(o=>`<div class="list-row"><strong>${esc(o.id)}</strong><span>${esc(o.client)} · ${esc(o.job)}</span><span class="badge ${o.measurementApproved?'green':o.measurement?'amber':'amber'}">${o.measurementApproved?'Medição aprovada':o.measurement?'Aguardando aprovação':'Aguardando medição'}</span><button data-open-order="${esc(o.id)}">Abrir</button></div>`).join('')||'<div class="empty">Nenhum pedido pendente.</div>';box.querySelectorAll('[data-open-order]').forEach(b=>b.onclick=()=>openOrder(b.dataset.openOrder))}if(production){let box=document.getElementById('dynamic-production-queue');if(!box){box=document.createElement('div');box.id='dynamic-production-queue';box.className='list';production.appendChild(box)}box.innerHTML=orders.filter(o=>o.status==='Em produção'&&o.measurementApproved).map(o=>`<div class="list-row"><strong>${esc(o.id)}</strong><span>${esc(o.client)} · ${esc(o.job)}</span><span class="badge green">Liberado para produção</span><button data-open-order="${esc(o.id)}">Abrir</button></div>`).join('')||'<div class="empty">Nenhum pedido liberado para produção.</div>';box.querySelectorAll('[data-open-order]').forEach(b=>b.onclick=()=>openOrder(b.dataset.openOrder))}}
 
-if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}))}
+document.querySelectorAll('[data-assist]').forEach(b=>b.addEventListener('click',()=>{const key=b.dataset.assist,result=document.getElementById('assistant-result');if(!result)return;const text={pedidos:`Há ${orders.filter(o=>o.status!=='Finalizado').length} pedidos em andamento.`,medicao:`Há ${orders.filter(o=>!o.measurementApproved).length} pedidos sem medição aprovada.`,producao:`Há ${orders.filter(o=>o.status==='Em produção'&&o.measurementApproved).length} pedidos liberados para produção.`,financeiro:'Use os lançamentos reais do módulo Financeiro para controlar contas a receber, parcelas e comissões.'};result.textContent=text[key]||'Tudo certo.'}));
+document.getElementById('clear-local')?.addEventListener('click',async()=>{if(confirm('Recarregar todos os dados do banco de dados?'))await Promise.all([loadOrders(),loadBudgets(),loadClients()])});
+if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 if(location.hash&&names[location.hash.slice(1)])go(location.hash.slice(1));
-
-(async()=>{
-  await Promise.all([loadOrders(), loadBudgets(), loadClients()]);
-  if(fl)fl.innerHTML=orders.filter(o=>o.status==='Em produção'||o.status==='Instalação').map(o=>`<div class="list-row"><strong>${esc(o.id)}</strong><span>${esc(o.client)} · ${esc(o.job)}</span><span class="badge amber">Em andamento</span></div>`).join('')||'<div class="empty">Nenhum acabamento em andamento.</div>';
-})();
+renderOrders();renderMetrics();renderBudgetsTable();
+(async()=>{await Promise.all([loadOrders(),loadBudgets(),loadClients()]);})();
