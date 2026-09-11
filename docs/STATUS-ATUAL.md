@@ -10,7 +10,7 @@ Este é o repositório ativo do novo Porcelane Operacional:
 
 O Porcelane antigo em produção permanece separado e protegido.
 
-## 2. O que já está implementado no código
+## 2. O que já está implementado
 
 - Interface principal Porcelane.
 - Navegação por módulos.
@@ -23,22 +23,26 @@ O Porcelane antigo em produção permanece separado e protegido.
 - Instalação vinculada ao pedido.
 - Regra de bloqueio de produção sem data de medição.
 - Proteção de pedido finalizado contra alteração direta.
-- Configuração por variáveis `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`.
+- Configuração por `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`.
 
-## 3. Correções e alinhamentos de 11/09/2026
+## 3. Correções aplicadas em 11/09/2026
 
-- README alinhado ao código real: Vite + JavaScript + Supabase, em vez de descrever React + TypeScript sem correspondência com a implementação atual.
-- Fluxo oficial atualizado para incluir projeto, leitura, ambientes, medição, desenho, produção, acabamento, logística, instalação, entrega e pós-venda.
-- Regras comerciais atuais registradas: tipos de atendimento, taxa de medição, condição de pagamento, comissões, margem e instalação diurna.
+- README alinhado ao código real: Vite + JavaScript + Supabase.
+- Fluxo oficial atualizado: projeto, leitura, ambientes, medição, desenho, produção, acabamento, logística, instalação, entrega e pós-venda.
+- Regras comerciais atuais registradas: tipos de atendimento, taxa de medição, pagamento, comissões, margem e instalação diurna.
 - Separação entre autenticação do GitHub e autenticação dos usuários do Porcelane documentada.
 - OneDrive definido como integração externa preferencial para documentos quando configurado; Supabase Storage permanece como armazenamento do aplicativo.
-- Márcia e IATA registrados como funções internas do ecossistema.
+- Márcia e IATA registrados como funções internas.
+- Service worker corrigido para não deixar `app.js` desatualizado no cache.
+- Guardas adicionais do fluxo operacional aplicadas: medição antes da conferência/produção, conferência antes da produção, produção antes da instalação e instalação + data antes da finalização.
+- Bloqueio de retorno de etapa no fluxo operacional.
+- Exemplos financeiros e de estoque fixos removidos da operação exibida para evitar mistura de dados fictícios com dados reais.
 
 ## 4. O que ainda precisa ser concluído antes de produção real
 
 1. Supabase Auth para usuários e perfis.
 2. RLS/policies adequadas ao acesso por perfil.
-3. Aprovação formal da medição, além da simples existência da data.
+3. Campo persistido de aprovação formal da medição.
 4. Orçamento completo com cálculo de m², preço/m², desconto, margem, pagamento e conversão para pedido.
 5. Pedido herdando integralmente os dados do orçamento aprovado.
 6. PCP/produção real: corte, paginação de chapas, sobras, veios e consumo de estoque.
@@ -52,7 +56,7 @@ O Porcelane antigo em produção permanece separado e protegido.
 
 ## 5. Regra que não pode ser quebrada
 
-A existência de `data_medicao` é obrigatória para liberar produção/ordem de corte, mas a versão definitiva deve exigir também um estado explícito de medição aprovada/conferida.
+A existência de `data_medicao` é obrigatória para liberar produção/ordem de corte. A evolução definitiva deverá manter também um estado persistido de medição aprovada/conferida.
 
 Nunca usar o GitHub ou o Bolt como substituto da autenticação do aplicativo.
 
