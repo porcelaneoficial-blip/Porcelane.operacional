@@ -17,13 +17,20 @@ O Porcelane antigo em produção permanece separado e protegido.
 - Dashboard operacional.
 - Orçamentos com gravação no Supabase.
 - Orçamento com área m², preço/m², desconto, margem, forma de pagamento e tipo de entrega.
+- Botão operacional para aprovar orçamento e gerar pedido, preservando os dados comerciais.
 - Conversão de orçamento aprovado em pedido com vínculo ao orçamento e herança dos dados comerciais.
 - Pedidos com gravação no Supabase.
 - Clientes e obras vinculados.
 - Medição/conferência com estado persistido de aprovação.
 - Auditoria operacional de criação/alteração dos principais registros.
 - Fila de produção.
-- Instalação vinculada ao pedido.
+- Ordens de produção e ordens de corte criadas automaticamente quando o pedido entra em produção.
+- Painel de produção alimentado por dados reais do Supabase.
+- Instalação vinculada ao pedido e agenda operacional real.
+- Agenda de entregas/logística alimentada pela tabela `entregas`.
+- Painel financeiro alimentado por contas a receber, contas a pagar e comissões reais.
+- Estoque alimentado pela tabela `materiais`.
+- Painel de documentos alimentado pela tabela `documentos`, incluindo indicação de vínculo com OneDrive.
 - Regra de bloqueio de produção sem medição registrada e aprovada.
 - Proteção de pedido finalizado contra alteração direta.
 - Configuração por `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`.
@@ -36,24 +43,25 @@ O Porcelane antigo em produção permanece separado e protegido.
 - Separação entre autenticação do GitHub e autenticação dos usuários do Porcelane documentada.
 - OneDrive definido como integração externa preferencial para documentos quando configurado; Supabase Storage permanece como armazenamento do aplicativo.
 - Márcia e IATA registrados como funções internas.
-- Service worker corrigido para não deixar `app.js` desatualizado no cache.
+- Service worker atualizado para v5 e preparado para refletir painéis reais sem reconstrução do app no Bolt.
 - Guardas adicionais do fluxo operacional aplicadas: medição antes da conferência/produção, conferência antes da produção, produção antes da instalação e instalação + data antes da finalização.
 - Bloqueio de retorno de etapa no fluxo operacional.
-- Exemplos financeiros e de estoque fixos removidos da operação exibida para evitar mistura de dados fictícios com dados reais.
+- Exemplos financeiros, estoque, produção, instalação, logística e documentos foram substituídos dinamicamente por dados reais quando disponíveis.
 - Migration comercial/medição/auditoria aplicada no Supabase ativo `jwbbhqmyjrmfkdnzfyhl` e registrada no repositório.
 
 ## 4. O que ainda precisa ser concluído antes de produção real
 
 1. Supabase Auth para usuários e perfis.
 2. RLS/policies adequadas ao acesso por perfil; a configuração atual é single-tenant sem login.
-3. PCP/produção real: corte, paginação de chapas, sobras, veios e consumo de estoque.
-4. Acabamento, logística, entrega e pós-venda com registros reais.
-5. Financeiro real com parcelas, Pix, cartão, recebimentos e comissões.
-6. RH e produtividade.
-7. Documentos/PDFs e organização por número do pedido.
-8. Portais do cliente e funcionário.
-9. Integração OneDrive, quando necessária.
-10. Testes completos de build e fluxo antes da publicação.
+3. PCP/produção real: corte, paginação de chapas, sobras, veios, fotos e consumo/reserva de estoque.
+4. Acabamento com etapas próprias e apontamento de qualidade.
+5. Logística/entrega com protocolos e comprovantes.
+6. Financeiro real com geração de parcelas, Pix, cartão, recebimentos e conciliação.
+7. RH e produtividade.
+8. Documentos/PDFs A4 e organização por número do pedido.
+9. Portais do cliente e funcionário.
+10. Integração OneDrive efetiva, quando necessária.
+11. Testes completos de build e fluxo antes da publicação.
 
 ## 5. Regra que não pode ser quebrada
 
