@@ -1,0 +1,47 @@
+import { createClient } from '@supabase/supabase-js';
+
+const db = createClient(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_ANON_KEY);
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money=v=>Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const date=v=>v?new Date(`${v}T12:00:00`).toLocaleDateString('pt-BR'):'—';
+
+async function orders(){
+ const {data,error}=await db.from('pedidos').select('id,numero,status,tipo,valor_total,desconto,forma_pagamento,tipo_entrega,data_medicao,medicao_aprovada,data_aprovacao_medicao,cliente:clientes(nome,telefone,email),obra:obras(nome)').order('criado_em',{ascending:false});
+ if(error){console.warn(error);return []} return data||[];
+}
+async function delivery(pedidoId){const {data}=await db.from('entregas').select('id,data_agendada,hora_inicio,hora_fim,status,endereco,responsavel,recebedor,observacoes').eq('pedido_id',pedidoId).order('data_agendada',{ascending:false}).limit(1).maybeSingle();return data||null}
+async function installation(pedidoId){const {data}=await db.from('instalacoes').select('data_agendada,hora_inicio,hora_fim,status,instalador,observacoes').eq('pedido_id',pedidoId).order('data_agendada',{ascending:false}).limit(1).maybeSingle();return data||null}
+
+function printA4(title,body){
+ const w=window.open('','_blank','noopener,noreferrer,width=900,height=700');
+ if(!w){alert('Permita pop-ups para imprimir o documento.');return}
+ w.document.write(`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>${esc(title)}</title><style>@page{size:A4;margin:14mm}*{box-sizing:border-box}body{font-family:Arial,sans-serif;color:#151515;font-size:11.5px;line-height:1.45;margin:0}h1{font-size:22px;letter-spacing:.04em;margin:0}h2{font-size:14px;margin:20px 0 8px;border-bottom:1px solid #222;padding-bottom:5px}.brand{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #111;padding-bottom:12px;margin-bottom:18px}.meta{color:#666}.grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.box{border:1px solid #ccc;padding:9px;border-radius:4px}.label{font-size:9px;text-transform:uppercase;color:#666;letter-spacing:.06em}.value{font-weight:600;margin-top:2px}table{width:100%;border-collapse:collapse;margin-top:8px}th,td{padding:7px;border-bottom:1px solid #ddd;text-align:left}th{font-size:9px;text-transform:uppercase;color:#666}.total{text-align:right;font-size:16px;font-weight:700;margin-top:12px}.check{display:flex;gap:8px;margin:7px 0}.signature{display:grid;grid-template-columns:1fr 1fr;gap:55px;margin-top:60px}.line{border-top:1px solid #222;padding-top:5px;text-align:center}.footer{margin-top:30px;padding-top:8px;border-top:1px solid #ccc;font-size:9px;color:#666}</style></head><body><div class="brand"><div><h1>PORCELANE</h1><div class="meta">Gestão operacional · Documento A4</div></div><div class="meta">${new Date().toLocaleDateString('pt-BR')}</div></div>${body}<div class="footer">PORCELANE · Documento gerado pelo sistema operacional.</div><script>window.onload=()=>setTimeout(()=>window.print(),250)<\/script></body></html>`);w.document.close();
+}
+function box(label,value){return `<div class="box"><div class="label">${esc(label)}</div><div class="value">${esc(value||'—')}</div></div>`}
+
+function pedidoDoc(p){
+ return `<h2>Pedido ${esc(p.numero)}</h2><div class="grid">${box('Cliente',p.cliente?.nome)}${box('Telefone',p.cliente?.telefone)}${box('Obra',p.obra?.nome)}${box('Tipo',p.tipo_entrega||p.tipo)}${box('Medição',p.data_medicao?`${date(p.data_medicao)} · ${p.medicao_aprovada?'APROVADA':'PENDENTE'}`:'Não registrada')}${box('Pagamento',p.forma_pagamento)}${box('Desconto',money(p.desconto))}${box('Valor do pedido',money(p.valor_total))}</div><h2>Conferência operacional</h2><div class="check">☐ Dados do cliente conferidos</div><div class="check">☐ Obra conferida</div><div class="check">☐ Medição registrada e aprovada</div><div class="check">☐ Produção liberada conforme fluxo</div><div class="signature"><div class="line">Responsável Porcelane</div><div class="line">Cliente / responsável</div></div>`;
+}
+function deliveryDoc(p,e){
+ return `<h2>Protocolo de ${p.tipo==='retirada'?'retirada':'entrega'}</h2><div class="grid">${box('Pedido',p.numero)}${box('Cliente',p.cliente?.nome)}${box('Obra',p.obra?.nome)}${box('Data',e?.data_agendada?date(e.data_agendada):date(new Date().toISOString().slice(0,10)))}${box('Horário',e?.hora_inicio||'—')}${box('Responsável',e?.responsavel)}${box('Recebedor',e?.recebedor)}${box('Endereço',e?.endereco)}</div><h2>Checklist</h2><div class="check">☐ Material conferido antes da saída</div><div class="check">☐ Quantidade e peças conferidas</div><div class="check">☐ Peças sem avarias aparentes na entrega/retirada</div><div class="check">☐ Cliente/responsável recebeu o material</div><div class="box" style="margin-top:16px"><div class="label">Observações</div><div class="value">${esc(e?.observacoes||'')}</div></div><div class="signature"><div class="line">Responsável Porcelane</div><div class="line">Recebedor / responsável</div></div>`;
+}
+function termDoc(p,e,i){
+ return `<h2>Termo de entrega e recebimento</h2><p>Declaro que o material/serviço referente ao pedido <strong>${esc(p.numero)}</strong>, em nome de <strong>${esc(p.cliente?.nome)}</strong>, foi entregue conforme o registro operacional abaixo.</p><div class="grid">${box('Obra',p.obra?.nome)}${box('Data de entrega',e?.data_agendada?date(e.data_agendada):'—')}${box('Responsável pela entrega',e?.responsavel)}${box('Recebedor',e?.recebedor)}${box('Instalação',i?.status==='concluida'?'Concluída':i?'Agendada':'Não aplicável'}${box('Observações',e?.observacoes||i?.observacoes||'')}</div><h2>Declaração</h2><p>O recebedor declara ter conferido o recebimento e estar ciente das condições registradas neste termo.</p><div class="signature"><div class="line">Responsável Porcelane</div><div class="line">Cliente / recebedor</div></div>`;
+}
+
+async function openDoc(type,id){
+ const list=await orders(); const p=list.find(x=>x.id===id); if(!p)return;
+ const [e,i]=await Promise.all([delivery(p.id),installation(p.id)]);
+ if(type==='pedido')printA4(`Pedido ${p.numero}`,pedidoDoc(p));
+ if(type==='protocolo')printA4(`Protocolo ${p.numero}`,deliveryDoc(p,e));
+ if(type==='termo')printA4(`Termo de entrega ${p.numero}`,termDoc(p,e,i));
+}
+
+async function render(){
+ const root=document.querySelector('#documentos .doc-grid'); if(!root)return;
+ const list=await orders();
+ root.innerHTML=list.length?list.map(p=>`<div class="panel"><strong>${esc(p.numero)}</strong><span>${esc(p.cliente?.nome||'')} · ${esc(p.obra?.nome||'')}</span><small>${money(p.valor_total)} · ${esc(p.status||'')}</small><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px"><button data-doc="pedido" data-id="${p.id}">Pedido A4</button><button data-doc="protocolo" data-id="${p.id}">Protocolo</button><button data-doc="termo" data-id="${p.id}">Termo de entrega</button></div></div>`).join(''):'<div class="panel"><p class="empty">Nenhum pedido disponível para documentos.</p></div>';
+ root.querySelectorAll('[data-doc]').forEach(b=>b.addEventListener('click',()=>openDoc(b.dataset.doc,b.dataset.id)));
+}
+window.addEventListener('load',()=>setTimeout(render,1400));
+window.addEventListener('hashchange',()=>setTimeout(render,300));
