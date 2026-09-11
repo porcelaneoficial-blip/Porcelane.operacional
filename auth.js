@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import APP_CONFIG from './core/app.config.js';
 
 const url = import.meta.env.VITE_SUPABASE_URL;
 const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -7,10 +8,12 @@ const ROLE_LABELS = {admin:'Administrador',vendas:'Vendas',tecnico:'Técnico',pc
 const ACCESS = {
   admin:['*'], vendas:['dashboard','orcamentos','pedidos','clientes','documentos','assistente'], tecnico:['dashboard','pedidos','medicao','desenho','documentos','assistente'], pcp:['dashboard','pedidos','producao','acabamento','estoque','documentos','assistente'], financeiro:['dashboard','pedidos','orcamentos','financeiro','documentos','assistente'], rh:['dashboard','rh','clientes','documentos','assistente'], instalacao:['dashboard','pedidos','logistica','instalacao','documentos','assistente'], cliente:['dashboard','pedidos','documentos']
 };
+const MODULE_ALIASES = {projetos:'desenho'};
 let profile = null;
 function esc(s){return String(s??'').replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]))}
-function allowed(view){return !profile || profile.role==='admin' || (ACCESS[profile.role]||[]).includes(view)}
-function firstAllowedView(){if(allowed('dashboard'))return 'dashboard';return Object.keys(ACCESS).find(()=>false)||'dashboard'}
+function moduleEnabled(view){const key=MODULE_ALIASES[view]||view;return APP_CONFIG.modules?.[view] ?? APP_CONFIG.modules?.[key] ?? true}
+function allowed(view){return moduleEnabled(view) && (!profile || profile.role==='admin' || (ACCESS[profile.role]||[]).includes(view))}
+function firstAllowedView(){if(allowed('dashboard'))return 'dashboard';const roleViews=ACCESS[profile?.role]||[];return roleViews.find(v=>v!=='*'&&moduleEnabled(v))||'dashboard'}
 function ensureVisibleView(){const active=document.querySelector('.view.active-view');if(active && allowed(active.id))return;const target=firstAllowedView();const button=document.querySelector(`.nav-item[data-view="${target}"]`);if(button)button.click();else{document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active-view',v.id===target));}}
 function applyAccess(){document.querySelectorAll('.nav-item').forEach(n=>{n.hidden=!allowed(n.dataset.view)});document.querySelectorAll('.view').forEach(v=>{if(!allowed(v.id))v.classList.remove('active-view')});ensureVisibleView();}
 function renderUser(){let el=document.getElementById('auth-user');if(!el)return;el.innerHTML=`<span>${esc(profile?.nome||profile?.email||'Usuário')}</span><small>${esc(ROLE_LABELS[profile?.role]||profile?.role||'')}</small><button id="auth-logout">Sair</button>`;document.getElementById('auth-logout').onclick=()=>supabase.auth.signOut();}
@@ -18,5 +21,6 @@ function loginUI(){if(document.getElementById('auth-overlay'))return;const d=doc
 function removeLogin(){document.getElementById('auth-overlay')?.remove()}
 async function loadProfile(user){if(!user){profile=null;loginUI();return}const {data,error}=await supabase.from('profiles').select('id,nome,email,role,ativo').eq('id',user.id).maybeSingle();if(error||!data){await supabase.auth.signOut();loginUI();const e=document.querySelector('#auth-error');if(e)e.textContent='Usuário sem perfil de acesso. Cadastre o perfil no Supabase.';return}if(data.ativo===false){await supabase.auth.signOut();loginUI();const e=document.querySelector('#auth-error');if(e)e.textContent='Acesso desativado.';return}profile={...data,email:data.email||user.email};removeLogin();applyAccess();renderUser();}
 async function bootAuth(){const {data:{session}}=await supabase.auth.getSession();await loadProfile(session?.user||null);supabase.auth.onAuthStateChange(async(_event,session)=>{await loadProfile(session?.user||null)});}
+window.PorcelaneConfig=APP_CONFIG;
 window.PorcelaneAuth={supabase,getProfile:()=>profile,allowed,ROLE_LABELS};
 bootAuth();
