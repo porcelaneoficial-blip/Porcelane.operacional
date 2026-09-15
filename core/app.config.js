@@ -7,6 +7,12 @@ export const APP_CONFIG = {
   nome: 'Porcelane',
   segmento: 'marmoraria',
   ambiente: 'production',
+  hosting: {
+    mode: 'self-hosted',
+    pwa: true,
+    containerized: true,
+    provider: 'vps',
+  },
   modules: {
     dashboard: true,
     clientes: true,
@@ -34,5 +40,14 @@ export const APP_CONFIG = {
     trello: false,
   },
 };
+
+// Mantém o mesmo código instalável como PWA quando servido por HTTPS.
+if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch((error) => {
+      console.warn('PWA: service worker não registrado.', error);
+    });
+  });
+}
 
 export default APP_CONFIG;
