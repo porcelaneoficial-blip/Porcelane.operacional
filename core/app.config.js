@@ -8,10 +8,11 @@ export const APP_CONFIG = {
   segmento: 'marmoraria',
   ambiente: 'production',
   hosting: {
-    mode: 'self-hosted',
+    mode: 'portable',
     pwa: true,
     containerized: true,
-    provider: 'vps',
+    providers: ['managed-static', 'vps'],
+    defaultProvider: 'managed-static',
   },
   modules: {
     dashboard: true,
