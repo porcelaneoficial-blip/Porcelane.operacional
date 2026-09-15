@@ -21,6 +21,7 @@ export const APP_CONFIG = {
     orcamentos: true,
     pedidos: true,
     medicao: true,
+    liberacao_tecnica: true,
     projetos: true,
     desenho: true,
     producao: true,
@@ -42,7 +43,6 @@ export const APP_CONFIG = {
   },
 };
 
-// Mantém o mesmo código instalável como PWA quando servido por HTTPS.
 if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js').catch((error) => {
