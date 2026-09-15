@@ -39,7 +39,10 @@ export const APP_CONFIG = {
   integrations: {
     supabase: true,
     supabaseStorage: true,
-    whatsappBusiness: true,
+    googleDrive: true,
+    googleDriveMode: 'archive-only',
+    whatsappBusiness: false,
+    whatsappInternalInbox: true,
     oneDrive: false,
     trello: false,
   },
