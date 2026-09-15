@@ -2,16 +2,12 @@ import { createClient } from '@supabase/supabase-js';
 
 const db = createClient(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_ANON_KEY);
 const ARCHIVE_URL = (import.meta.env.VITE_GOOGLE_DRIVE_ARCHIVE_URL || '').trim();
+const BUCKET = 'pedidos-fechados';
 
 const esc = (v) => String(v ?? '').replace(/[&<>\"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]));
 
-export function driveConfigured() {
-  return Boolean(ARCHIVE_URL);
-}
-
-export function driveArchiveStatus() {
-  return driveConfigured() ? 'configurado' : 'não configurado';
-}
+export function driveConfigured() { return Boolean(ARCHIVE_URL); }
+export function driveArchiveStatus() { return driveConfigured() ? 'configurado' : 'não configurado'; }
 
 async function authUser() {
   const { data: { user } } = await db.auth.getUser();
@@ -19,11 +15,9 @@ async function authUser() {
 }
 
 async function pedidoInfo(pedidoId) {
-  const { data, error } = await db
-    .from('pedidos')
+  const { data, error } = await db.from('pedidos')
     .select('id,numero,status,criado_em,cliente:clientes(nome)')
-    .eq('id', pedidoId)
-    .single();
+    .eq('id', pedidoId).single();
   if (error) throw error;
   return data;
 }
@@ -32,11 +26,22 @@ function monthName(date) {
   return new Intl.DateTimeFormat('pt-BR', { month: 'long' }).format(date).toUpperCase();
 }
 
-function archivePayload(pedido, documents) {
+async function signedStorageUrl(path) {
+  const { data, error } = await db.storage.from(BUCKET).createSignedUrl(path, 600);
+  if (error || !data?.signedUrl) throw new Error(`Não foi possível preparar o documento para o Drive: ${error?.message || 'URL indisponível'}`);
+  return data.signedUrl;
+}
+
+async function archivePayload(pedido, documents) {
   const date = new Date(pedido.criado_em || Date.now());
   const year = String(date.getFullYear());
   const month = `${String(date.getMonth() + 1).padStart(2, '0')} - ${monthName(date)}`;
   const client = String(pedido.cliente?.nome || 'CLIENTE').replace(/[\\/:*?\"<>|]+/g, ' ').trim();
+  const prepared = [];
+  for (const d of documents) {
+    if (!d.arquivo_url) continue;
+    prepared.push({ documento_id: d.id, titulo: d.titulo, file_url: await signedStorageUrl(d.arquivo_url) });
+  }
   return {
     action: 'archive_order',
     pedido_id: pedido.id,
@@ -44,11 +49,7 @@ function archivePayload(pedido, documents) {
     year,
     month,
     folder_name: `${pedido.numero} - ${client}`,
-    documents: documents.map((d) => ({
-      documento_id: d.id,
-      titulo: d.titulo,
-      storage_path: d.arquivo_url,
-    })),
+    documents: prepared,
   };
 }
 
@@ -57,23 +58,18 @@ export async function archivePedidoToDrive(pedidoId) {
   const user = await authUser();
   if (!user) throw new Error('Faça login para arquivar o pedido.');
   const pedido = await pedidoInfo(pedidoId);
-  const { data: documents, error: docsError } = await db
-    .from('documentos')
-    .select('id,titulo,arquivo_url')
-    .eq('pedido_id', pedidoId)
-    .not('arquivo_url', 'is', null)
-    .order('criado_em', { ascending: true });
+  const { data: documents, error: docsError } = await db.from('documentos')
+    .select('id,titulo,arquivo_url').eq('pedido_id', pedidoId)
+    .not('arquivo_url', 'is', null).order('criado_em', { ascending: true });
   if (docsError) throw docsError;
 
   const response = await fetch(ARCHIVE_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(archivePayload(pedido, documents || [])),
+    body: JSON.stringify(await archivePayload(pedido, documents || [])),
   });
   const result = await response.json().catch(() => ({}));
-  if (!response.ok || result.ok === false) {
-    throw new Error(result.error || `Falha no arquivamento (${response.status}).`);
-  }
+  if (!response.ok || result.ok === false) throw new Error(result.error || `Falha no arquivamento (${response.status}).`);
 
   const now = new Date().toISOString();
   const { error: orderError } = await db.from('pedidos').update({
@@ -83,36 +79,25 @@ export async function archivePedidoToDrive(pedidoId) {
   }).eq('id', pedidoId);
   if (orderError) throw orderError;
 
-  if (result.files?.length) {
-    for (const file of result.files) {
-      if (!file.documento_id) continue;
-      await db.from('documentos').update({
-        google_drive_file_id: file.file_id || null,
-        google_drive_file_url: file.file_url || null,
-        arquivado_drive_em: now,
-      }).eq('id', file.documento_id);
-    }
+  for (const file of result.files || []) {
+    if (!file.documento_id || file.error) continue;
+    await db.from('documentos').update({
+      google_drive_file_id: file.file_id || null,
+      google_drive_file_url: file.file_url || null,
+      arquivado_drive_em: now,
+    }).eq('id', file.documento_id);
   }
-
   return result;
 }
 
 export function renderDriveArchiveButton(pedidoId, target) {
   if (!target) return;
-  target.innerHTML = `<div class="drive-archive-box"><strong>Arquivo Google Drive</strong><span>${driveConfigured() ? 'Arquivamento automático disponível.' : 'Integração ainda não configurada.'}</span>${driveConfigured() ? `<button type="button" data-drive-archive="${esc(pedidoId)}">Arquivar pedido no Drive</button>` : ''}<small>Estrutura: PEDIDOS → ANO → MÊS → PEDIDO + CLIENTE.</small></div>`;
+  target.innerHTML = `<div class="drive-archive-box"><strong>Arquivo Google Drive</strong><span>${driveConfigured() ? 'Arquivamento disponível.' : 'Integração ainda não configurada.'}</span>${driveConfigured() ? `<button type="button" data-drive-archive="${esc(pedidoId)}">Arquivar pedido no Drive</button>` : ''}<small>Estrutura: PEDIDOS → ANO → MÊS → PEDIDO + CLIENTE.</small></div>`;
   const button = target.querySelector('[data-drive-archive]');
   if (button) button.onclick = async () => {
-    button.disabled = true;
-    button.textContent = 'Arquivando…';
-    try {
-      await archivePedidoToDrive(pedidoId);
-      button.textContent = 'Arquivado no Drive';
-      alert('Pedido arquivado no Google Drive.');
-    } catch (error) {
-      button.disabled = false;
-      button.textContent = 'Arquivar pedido no Drive';
-      alert(error.message);
-    }
+    button.disabled = true; button.textContent = 'Arquivando…';
+    try { await archivePedidoToDrive(pedidoId); button.textContent = 'Arquivado no Drive'; alert('Pedido arquivado no Google Drive.'); }
+    catch (error) { button.disabled = false; button.textContent = 'Arquivar pedido no Drive'; alert(error.message); }
   };
 }
 
