@@ -5,3 +5,4 @@ if (oldButton) {
   oldButton.replaceWith(button);
   button.addEventListener('click', () => window.PorcelaneQuotes?.openEditor());
 }
+setTimeout(() => window.PorcelaneQuotes?.refreshBudgetList(), 1200);
