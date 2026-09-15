@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import './whatsapp.css';
 
 const db = createClient(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_ANON_KEY);
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -18,11 +19,7 @@ let conversas = [];
 let conversaAtual = null;
 
 function filaByCodigo(codigo) { return filas.find(f => f.codigo === codigo); }
-function detectarFila(texto) {
-  const t = String(texto || '').toLowerCase();
-  const hit = ASSUNTO_FILA.find(([term]) => t.includes(term));
-  return hit ? hit[1] : 'geral';
-}
+function detectarFila(texto) { const t = String(texto || '').toLowerCase(); const hit = ASSUNTO_FILA.find(([term]) => t.includes(term)); return hit ? hit[1] : 'geral'; }
 function filaNome(codigo) { return filaByCodigo(codigo)?.nome || 'Atendimento geral'; }
 
 async function load() {
@@ -36,16 +33,8 @@ async function load() {
 }
 
 function render() {
-  const root = document.getElementById('whatsapp-root');
-  if (!root) return;
-  root.innerHTML = `<div class="wa-shell">
-    <aside class="wa-list">
-      <div class="wa-list-head"><div><strong>WhatsApp</strong><small>Caixa de atendimento</small></div><button id="wa-new">＋</button></div>
-      <div class="wa-tabs"><button class="active" data-wa-filter="all">Todas</button><button data-wa-filter="bot">🤖 Bot</button><button data-wa-filter="aguardando">Aguardando</button><button data-wa-filter="humano">Humanas</button></div>
-      <div id="wa-conversations"></div>
-    </aside>
-    <main class="wa-chat" id="wa-chat"><div class="wa-empty"><div>💬</div><strong>Selecione uma conversa</strong><span>O chatbot identifica o assunto e encaminha para a fila correspondente.</span></div></main>
-  </div>`;
+  const root = document.getElementById('whatsapp-root'); if (!root) return;
+  root.innerHTML = `<div class="wa-shell"><aside class="wa-list"><div class="wa-list-head"><div><strong>WhatsApp</strong><small>Caixa de atendimento</small></div><button id="wa-new">＋</button></div><div class="wa-tabs"><button class="active" data-wa-filter="all">Todas</button><button data-wa-filter="bot">🤖 Bot</button><button data-wa-filter="aguardando">Aguardando</button><button data-wa-filter="humano">Humanas</button></div><div id="wa-conversations"></div></aside><main class="wa-chat" id="wa-chat"><div class="wa-empty"><div>💬</div><strong>Selecione uma conversa</strong><span>O chatbot identifica o assunto e encaminha para a fila correspondente.</span></div></main></div>`;
   renderList('all');
   root.querySelectorAll('[data-wa-filter]').forEach(b => b.onclick = () => { root.querySelectorAll('[data-wa-filter]').forEach(x=>x.classList.remove('active')); b.classList.add('active'); renderList(b.dataset.waFilter); });
   document.getElementById('wa-new').onclick = newConversation;
@@ -54,66 +43,24 @@ function render() {
 function renderList(filter) {
   const el = document.getElementById('wa-conversations'); if (!el) return;
   const list = filter === 'all' ? conversas : conversas.filter(c => c.status === filter);
-  el.innerHTML = list.length ? list.map(c => `<button class="wa-conv ${c.id===conversaAtual?'selected':''}" data-wa-id="${c.id}">
-    <span class="wa-avatar">${esc((c.nome_cliente || c.telefone || '?').slice(0,1).toUpperCase())}</span>
-    <span class="wa-conv-body"><strong>${esc(c.nome_cliente || c.telefone)}</strong><small>${esc(filaNome(filas.find(f=>f.id===c.fila_id)?.codigo))}</small></span>
-    ${c.nao_lidas ? `<b class="wa-unread">${c.nao_lidas}</b>` : ''}
-  </button>`).join('') : '<div class="wa-none">Nenhuma conversa nesta fila.</div>';
+  el.innerHTML = list.length ? list.map(c => `<button class="wa-conv ${c.id===conversaAtual?'selected':''}" data-wa-id="${c.id}"><span class="wa-avatar">${esc((c.nome_cliente || c.telefone || '?').slice(0,1).toUpperCase())}</span><span class="wa-conv-body"><strong>${esc(c.nome_cliente || c.telefone)}</strong><small>${esc(filaNome(filas.find(f=>f.id===c.fila_id)?.codigo))}</small></span>${c.nao_lidas ? `<b class="wa-unread">${c.nao_lidas}</b>` : ''}</button>`).join('') : '<div class="wa-none">Nenhuma conversa nesta fila.</div>';
   el.querySelectorAll('[data-wa-id]').forEach(b => b.onclick = () => openConversation(b.dataset.waId));
 }
 
 async function openConversation(id) {
-  conversaAtual = id;
-  const c = conversas.find(x => x.id === id); if (!c) return;
+  conversaAtual = id; const c = conversas.find(x => x.id === id); if (!c) return;
   const msgs = await db.from('whatsapp_mensagens').select('id,direcao,remetente,conteudo,media_url,media_tipo,criado_em').eq('conversa_id',id).order('criado_em');
-  const messages = msgs.error ? [] : (msgs.data || []);
-  const fila = filas.find(f => f.id === c.fila_id);
-  const chat = document.getElementById('wa-chat');
-  chat.innerHTML = `<div class="wa-chat-head"><div><strong>${esc(c.nome_cliente || c.telefone)}</strong><small>${esc(c.telefone)} · ${esc(fila?.nome || 'Atendimento geral')}</small></div><div class="wa-actions"><span class="wa-status ${esc(c.status)}">${c.status==='bot'?'🤖 Chatbot':c.status==='humano'?'👤 Atendimento humano':c.status==='aguardando'?'⏳ Aguardando':'✓ Resolvido'}</span><button id="wa-claim">Assumir</button><button id="wa-resolve">Resolver</button></div></div>
-    <div class="wa-context"><span>Fila: <b>${esc(fila?.nome || 'Atendimento geral')}</b></span><span>Assunto: <b>${esc(c.assunto || 'Não identificado')}</b></span><span>${c.pedido_id ? 'Pedido vinculado' : 'Sem pedido vinculado'}</span></div>
-    <div class="wa-messages" id="wa-messages">${messages.length ? messages.map(m => `<div class="wa-msg ${m.direcao==='saida'?'out':'in'}"><div>${esc(m.conteudo || '')}</div><small>${new Date(m.criado_em).toLocaleString('pt-BR')}</small></div>`).join('') : '<div class="wa-no-msg">Nenhuma mensagem registrada.</div>'}</div>
-    <form class="wa-composer" id="wa-composer"><input id="wa-text" placeholder="Digite uma mensagem..." autocomplete="off"><button>Enviar</button></form>`;
-  document.getElementById('wa-claim').onclick = () => claim(c);
-  document.getElementById('wa-resolve').onclick = () => resolve(c);
-  document.getElementById('wa-composer').onsubmit = e => sendMessage(e,c);
+  const messages = msgs.error ? [] : (msgs.data || []); const fila = filas.find(f => f.id === c.fila_id); const chat = document.getElementById('wa-chat');
+  chat.innerHTML = `<div class="wa-chat-head"><div><strong>${esc(c.nome_cliente || c.telefone)}</strong><small>${esc(c.telefone)} · ${esc(fila?.nome || 'Atendimento geral')}</small></div><div class="wa-actions"><span class="wa-status ${esc(c.status)}">${c.status==='bot'?'🤖 Chatbot':c.status==='humano'?'👤 Atendimento humano':c.status==='aguardando'?'⏳ Aguardando':'✓ Resolvido'}</span><button id="wa-claim">Assumir</button><button id="wa-resolve">Resolver</button></div></div><div class="wa-context"><span>Fila: <b>${esc(fila?.nome || 'Atendimento geral')}</b></span><span>Assunto: <b>${esc(c.assunto || 'Não identificado')}</b></span><span>${c.pedido_id ? 'Pedido vinculado' : 'Sem pedido vinculado'}</span></div><div class="wa-messages" id="wa-messages">${messages.length ? messages.map(m => `<div class="wa-msg ${m.direcao==='saida'?'out':'in'}"><div>${esc(m.conteudo || '')}</div><small>${new Date(m.criado_em).toLocaleString('pt-BR')}</small></div>`).join('') : '<div class="wa-no-msg">Nenhuma mensagem registrada.</div>'}</div><form class="wa-composer" id="wa-composer"><input id="wa-text" placeholder="Digite uma mensagem..." autocomplete="off"><button>Enviar</button></form>`;
+  document.getElementById('wa-claim').onclick = () => claim(c); document.getElementById('wa-resolve').onclick = () => resolve(c); document.getElementById('wa-composer').onsubmit = e => sendMessage(e,c);
   const box=document.getElementById('wa-messages'); box.scrollTop=box.scrollHeight;
-  await db.from('whatsapp_conversas').update({nao_lidas:0,atualizado_em:new Date().toISOString()}).eq('id',id);
-  c.nao_lidas=0; renderList('all');
+  await db.from('whatsapp_conversas').update({nao_lidas:0,atualizado_em:new Date().toISOString()}).eq('id',id); c.nao_lidas=0; renderList('all');
 }
 
-async function claim(c) {
-  const {data:{user}} = await db.auth.getUser();
-  if (!user) { alert('Faça login para assumir o atendimento.'); return; }
-  const {error} = await db.from('whatsapp_conversas').update({status:'humano',responsavel_id:user.id,atualizado_em:new Date().toISOString()}).eq('id',c.id);
-  if (error) { alert('Não foi possível assumir: '+error.message); return; }
-  c.status='humano'; c.responsavel_id=user.id; openConversation(c.id);
-}
-
-async function resolve(c) {
-  const {error}=await db.from('whatsapp_conversas').update({status:'resolvido',atualizado_em:new Date().toISOString()}).eq('id',c.id);
-  if(error){alert('Não foi possível resolver: '+error.message);return;}
-  c.status='resolvido'; renderList('all'); openConversation(c.id);
-}
-
-async function sendMessage(e,c) {
-  e.preventDefault();
-  const input=document.getElementById('wa-text'); const text=input.value.trim(); if(!text)return;
-  const {data:{user}}=await db.auth.getUser();
-  const {error}=await db.from('whatsapp_mensagens').insert({conversa_id:c.id,direcao:'saida',remetente:user?.id||null,conteudo:text,origem:'porcelane'});
-  if(error){alert('Erro ao registrar mensagem: '+error.message);return;}
-  await db.from('whatsapp_conversas').update({status:'humano',ultima_mensagem_em:new Date().toISOString(),atualizado_em:new Date().toISOString()}).eq('id',c.id);
-  input.value=''; c.status='humano'; openConversation(c.id);
-}
-
-async function newConversation() {
-  const telefone=prompt('Número do WhatsApp (com DDI):'); if(!telefone)return;
-  const nome=prompt('Nome do cliente:')||telefone;
-  const assunto=prompt('Assunto inicial (ex.: orçamento, pagamento, instalação):')||'';
-  const codigo=detectarFila(assunto); const fila=filaByCodigo(codigo) || filaByCodigo('geral');
-  const {data,error}=await db.from('whatsapp_conversas').insert({telefone,nome_cliente:nome,fila_id:fila?.id||null,assunto:assunto||'Não identificado',status:'bot',nao_lidas:0}).select().single();
-  if(error){alert('Erro ao criar conversa: '+error.message);return;}
-  conversas.unshift(data); renderList('all'); openConversation(data.id);
-}
+async function claim(c) { const {data:{user}} = await db.auth.getUser(); if (!user) { alert('Faça login para assumir o atendimento.'); return; } const {error} = await db.from('whatsapp_conversas').update({status:'humano',responsavel_id:user.id,atualizado_em:new Date().toISOString()}).eq('id',c.id); if (error) { alert('Não foi possível assumir: '+error.message); return; } c.status='humano'; c.responsavel_id=user.id; openConversation(c.id); }
+async function resolve(c) { const {error}=await db.from('whatsapp_conversas').update({status:'resolvido',atualizado_em:new Date().toISOString()}).eq('id',c.id); if(error){alert('Não foi possível resolver: '+error.message);return;} c.status='resolvido'; renderList('all'); openConversation(c.id); }
+async function sendMessage(e,c) { e.preventDefault(); const input=document.getElementById('wa-text'); const text=input.value.trim(); if(!text)return; const {data:{user}}=await db.auth.getUser(); const {error}=await db.from('whatsapp_mensagens').insert({conversa_id:c.id,direcao:'saida',remetente:user?.id||null,conteudo:text,origem:'porcelane'}); if(error){alert('Erro ao registrar mensagem: '+error.message);return;} await db.from('whatsapp_conversas').update({status:'humano',ultima_mensagem_em:new Date().toISOString(),atualizado_em:new Date().toISOString()}).eq('id',c.id); input.value=''; c.status='humano'; openConversation(c.id); }
+async function newConversation() { const telefone=prompt('Número do WhatsApp (com DDI):'); if(!telefone)return; const nome=prompt('Nome do cliente:')||telefone; const assunto=prompt('Assunto inicial (ex.: orçamento, pagamento, instalação):')||''; const codigo=detectarFila(assunto); const fila=filaByCodigo(codigo) || filaByCodigo('geral'); const {data,error}=await db.from('whatsapp_conversas').insert({telefone,nome_cliente:nome,fila_id:fila?.id||null,assunto:assunto||'Não identificado',status:'bot',nao_lidas:0}).select().single(); if(error){alert('Erro ao criar conversa: '+error.message);return;} conversas.unshift(data); renderList('all'); openConversation(data.id); }
 
 window.PorcelaneWhatsApp = { load, detectarFila, filaNome };
 window.addEventListener('load', () => setTimeout(load, 1000));
