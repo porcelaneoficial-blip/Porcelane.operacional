@@ -6,4 +6,5 @@ if (oldButton) {
   button.addEventListener('click', () => window.PorcelaneQuotes?.openEditor());
 }
 import('./orcamentos-finalizacao.js').catch(error => console.error('Orçamentos finalização:', error));
+import('./operacional-correcoes.js').catch(error => console.error('Correções operacionais:', error));
 setTimeout(() => window.PorcelaneQuotes?.refreshBudgetList(), 1800);
