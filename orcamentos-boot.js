@@ -7,4 +7,5 @@ if (oldButton) {
 }
 import('./orcamentos-finalizacao.js').catch(error => console.error('Orçamentos finalização:', error));
 import('./operacional-correcoes.js').catch(error => console.error('Correções operacionais:', error));
+import('./drive-archive.js').catch(error => console.error('Arquivamento Google Drive:', error));
 setTimeout(() => window.PorcelaneQuotes?.refreshBudgetList(), 1800);
