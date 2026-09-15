@@ -8,74 +8,21 @@
 <link rel="manifest" href="/manifest.webmanifest"/>
 <link rel="stylesheet" href="/styles.css"/>
 <title>PORCELANE</title>
-<meta property="og:image" content="https://bolt.new/static/og_default.png">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="https://bolt.new/static/og_default.png">
-</head>
-<body>
-
-<aside class="sidebar">
-  <div class="brand">
-    <div class="brand-mark">P</div>
-    <div>
-      <strong>PORCELANE</strong>
-      <small>OPERAÇÃO</small>
-    </div>
-  </div>
-  <nav>
-    <button class="nav-item" data-view="dashboard">Visão geral</button>
-    <button class="nav-item" data-view="orcamentos">Orçamentos</button>
-    <button class="nav-item" data-view="pedidos">Pedidos</button>
-    <button class="nav-item" data-view="medicao">Medição / Conferência</button>
-    <button class="nav-item" data-view="desenho">Desenho técnico</button>
-    <button class="nav-item" data-view="producao">Produção</button>
-    <button class="nav-item" data-view="acabamento">Acabamento</button>
-    <button class="nav-item" data-view="logistica">Carregamento / Logística</button>
-    <button class="nav-item" data-view="instalacao">Instalação</button>
-    <button class="nav-item" data-view="clientes">Clientes</button>
-    <button class="nav-item" data-view="financeiro">Financeiro</button>
-    <button class="nav-item" data-view="estoque">Estoque</button>
-    <button class="nav-item" data-view="rh">RH / Administrativo</button>
-    <button class="nav-item" data-view="documentos">Documentos</button>
-    <button class="nav-item" data-view="assistente">Assistente</button>
-    <button class="nav-item" data-view="configuracoes">Configurações</button>
-  </nav>
-  <div class="sidebar-footer"><span>PORCELANE · PETRA</span><br/>Gestão para marmorarias</div>
-</aside>
-
-<div class="main">
-  <div class="topbar">
-    <div><div class="eyebrow">PORCELANE</div><h1 id="page-title">Visão geral</h1></div>
-    <div class="top-actions"><span class="status-dot">● Sistema operacional</span></div>
-  </div>
-
-  <section class="view active-view" id="dashboard">
-    <div class="hero"><div><div class="eyebrow">Bem-vindo</div><h2>Visão geral da operação</h2><p>Acompanhe pedidos, produção e instalações em tempo real.</p></div><div class="hero-date" id="today"></div></div>
-    <div class="cards" id="dashboard-metrics"></div>
-    <div class="grid-2"><div class="panel"><div class="panel-head"><h3>Pedidos recentes</h3><button class="link-btn" data-view-link="pedidos">Ver todos</button></div><div class="list" id="recent-orders"></div></div><div class="panel"><div class="panel-head"><h3>Pipeline operacional</h3></div><div class="pipeline"><span>Pedido</span><b>→</b><span>Conferência</span><b>→</b><span>Produção</span><b>→</b><span>Instalação</span><b>→</b><span>Finalizado</span></div><p class="empty" style="margin-top:18px">Sem medição registrada e aprovada, a produção permanece bloqueada.</p></div></div>
-  </section>
-
-  <section class="view" id="orcamentos"><div class="section-head"><div><h2>Orçamentos</h2><p>Elabore e acompanhe propostas comerciais.</p></div><button class="primary" id="new-budget">Novo orçamento</button></div><div class="panel table-panel"><table><thead><tr><th>Nº</th><th>Cliente</th><th>Obra</th><th>M²</th><th>Valor</th><th>Status</th></tr></thead><tbody id="budgets-table"><tr><td colspan="6" class="empty">Nenhum orçamento cadastrado. Clique em "Novo orçamento".</td></tr></tbody></table></div></section>
-  <section class="view" id="pedidos"><div class="section-head"><div><h2>Pedidos</h2><p>Kanban de pedidos — fluxo operacional controlado pelo sistema.</p></div><button class="primary" id="new-order">Novo pedido</button></div><div class="kanban" id="orders-board"></div></section>
-  <section class="view" id="medicao"><div class="section-head"><div><h2>Medição / Conferência</h2><p>Pedidos aguardando medição. Sem medição aprovada, a produção fica bloqueada.</p></div></div><div class="panel"><div class="panel-head"><h3>Fila de medição</h3></div><div class="list" id="measurement-queue-static"></div></div></section>
-  <section class="view" id="desenho"><div class="section-head"><div><h2>Desenho técnico</h2><p>Plantas e croquis vinculados aos pedidos.</p></div></div><div class="panel"><p class="empty">Nenhum desenho técnico vinculado no momento.</p></div></section>
-  <section class="view" id="producao"><div class="section-head"><div><h2>Produção</h2><p>Pedidos liberados para corte e fabricação.</p></div></div><div class="production-grid"><div class="panel"><div class="panel-head"><h3>Fila de produção</h3></div><div class="list" id="production-queue-static"></div></div><div class="panel"><div class="panel-head"><h3>Andamento</h3></div><div class="list" id="production-progress-list"></div></div></div></section>
-  <section class="view" id="acabamento"><div class="section-head"><div><h2>Acabamento</h2><p>Polimento, detalhes e inspeção de qualidade.</p></div></div><div class="panel"><div class="panel-head"><h3>Fila de acabamento</h3></div><div class="list" id="finish-list"></div></div></section>
-  <section class="view" id="logistica"><div class="section-head"><div><h2>Carregamento / Logística</h2><p>Agendamento de transportes e entregas.</p></div></div><div class="panel"><div class="list" id="logistics-list"></div></div></section>
-  <section class="view" id="instalacao"><div class="section-head"><div><h2>Instalação</h2><p>Acompanhe as instalações programadas.</p></div></div><div class="panel"><div class="list" id="installation-list"></div></div></section>
-  <section class="view" id="clientes"><div class="section-head"><div><h2>Clientes</h2><p>Cadastro e histórico de clientes.</p></div><button class="primary" id="new-client">Novo cliente</button></div><div class="panel"><div class="list" id="clients-list"></div></div></section>
-  <section class="view" id="financeiro"><div class="section-head"><div><h2>Financeiro</h2><p>Contas a receber, parcelas e comissões.</p></div></div><div class="grid-2"><div class="panel"><div class="panel-head"><h3>Contas a receber</h3></div><div class="list" id="receivables-list"></div></div><div class="panel"><div class="panel-head"><h3>Resumo</h3></div><div class="cards" id="finance-metrics" style="grid-template-columns:1fr"></div></div></div></section>
-  <section class="view" id="estoque"><div class="section-head"><div><h2>Estoque</h2><p>Chapas, insumos, reservas e sobras.</p></div></div><div class="panel table-panel"><table><thead><tr><th>Material</th><th>Tipo</th><th>Quantidade</th><th>Unidade</th></tr></thead><tbody id="stock-table"></tbody></table></div></section>
-  <section class="view" id="rh"><div class="section-head"><div><h2>RH / Administrativo</h2><p>Equipe, escalas e documentos internos.</p></div></div><div class="panel"><div class="list" id="hr-list"></div></div></section>
-  <section class="view" id="documentos"><div class="section-head"><div><h2>Documentos</h2><p>Pedido, protocolo e termo de entrega em A4.</p></div></div><div class="doc-grid"></div></section>
-  <section class="view" id="assistente"><div class="section-head"><div><h2>Assistente</h2><p>Perguntas rápidas sobre a operação.</p></div></div><div class="panel assistant"><div class="assistant-msg"><p>Olá! Escolha uma opção para consultar a operação.</p></div><div class="quick-actions"><button data-assist="pedidos">Quantos pedidos em andamento?</button><button data-assist="medicao">Pedidos sem medição?</button><button data-assist="producao">Pedidos em produção?</button><button data-assist="financeiro">Resumo financeiro</button></div><div class="assistant-result" id="assistant-result">Selecione uma opção acima.</div></div></section>
-  <section class="view" id="configuracoes"><div class="section-head"><div><h2>Configurações</h2><p>Preferências e integrações do sistema.</p></div></div><div class="settings-grid"><div class="panel"><strong>Supabase</strong><span>Banco operacional conectado por variáveis de ambiente.</span></div><div class="panel"><strong>PWA</strong><span>Service worker ativo para recursos offline.</span></div><div class="panel"><strong>Dados locais</strong><span>Use apenas para cache auxiliar. Os dados oficiais ficam no Supabase.</span><button class="secondary" id="clear-local" style="margin-top:12px">Limpar cache local</button></div><div class="panel"><strong>Regras</strong><span>Produção exige medição aprovada. O fluxo não pode retroceder.</span></div></div></section>
-</div>
-
-<div id="auth-user" class="auth-user"></div>
-<script type="module" src="/auth.js"></script>
-<script type="module" src="/app.js"></script>
-<script type="module" src="/operacao.js"></script>
-<script type="module" src="/documentos.js"></script>
-</body>
-</html>
+<meta property="og:image" content="https://bolt.new/static/og_default.png"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="https://bolt.new/static/og_default.png">
+</head><body>
+<aside class="sidebar"><div class="brand"><div class="brand-mark">P</div><div><strong>PORCELANE</strong><small>OPERAÇÃO</small></div></div><nav>
+<button class="nav-item" data-view="dashboard">Visão geral</button><button class="nav-item" data-view="orcamentos">Orçamentos</button><button class="nav-item" data-view="pedidos">Pedidos</button><button class="nav-item" data-view="medicao">Medição / Conferência</button><button class="nav-item" data-view="liberacao_tecnica">Liberação Técnica</button><button class="nav-item" data-view="desenho">Desenho técnico</button><button class="nav-item" data-view="producao">Produção</button><button class="nav-item" data-view="acabamento">Acabamento</button><button class="nav-item" data-view="logistica">Carregamento / Logística</button><button class="nav-item" data-view="instalacao">Instalação</button><button class="nav-item" data-view="clientes">Clientes</button><button class="nav-item" data-view="financeiro">Financeiro</button><button class="nav-item" data-view="estoque">Estoque</button><button class="nav-item" data-view="rh">RH / Administrativo</button><button class="nav-item" data-view="documentos">Documentos</button><button class="nav-item" data-view="assistente">Assistente</button><button class="nav-item" data-view="configuracoes">Configurações</button>
+</nav><div class="sidebar-footer"><span>PORCELANE · PETRA</span><br/>Gestão para marmorarias</div></aside>
+<div class="main"><div class="topbar"><div><div class="eyebrow">PORCELANE</div><h1 id="page-title">Visão geral</h1></div><div class="top-actions"><span class="status-dot">● Sistema operacional</span></div></div>
+<section class="view active-view" id="dashboard"><div class="hero"><div><div class="eyebrow">Bem-vindo</div><h2>Visão geral da operação</h2><p>Acompanhe pedidos, produção e instalações em tempo real.</p></div><div class="hero-date" id="today"></div></div><div class="cards" id="dashboard-metrics"></div><div class="grid-2"><div class="panel"><div class="panel-head"><h3>Pedidos recentes</h3><button class="link-btn" data-view-link="pedidos">Ver todos</button></div><div class="list" id="recent-orders"></div></div><div class="panel"><div class="panel-head"><h3>Pipeline operacional</h3></div><div class="pipeline"><span>Pedido</span><b>→</b><span>Conferência</span><b>→</b><span>Liberação Técnica</span><b>→</b><span>Desenho</span><b>→</b><span>Produção</span><b>→</b><span>Instalação</span></div><p class="empty" style="margin-top:18px">Sem medição registrada e aprovada, a liberação técnica e a produção permanecem bloqueadas.</p></div></div></section>
+<section class="view" id="orcamentos"><div class="section-head"><div><h2>Orçamentos</h2><p>Elabore e acompanhe propostas comerciais.</p></div><button class="primary" id="new-budget">Novo orçamento</button></div><div class="panel table-panel"><table><thead><tr><th>Nº</th><th>Cliente</th><th>Obra</th><th>M²</th><th>Valor</th><th>Status</th></tr></thead><tbody id="budgets-table"><tr><td colspan="6" class="empty">Nenhum orçamento cadastrado. Clique em "Novo orçamento".</td></tr></tbody></table></div></section>
+<section class="view" id="pedidos"><div class="section-head"><div><h2>Pedidos</h2><p>Kanban de pedidos — fluxo operacional controlado pelo sistema.</p></div><button class="primary" id="new-order">Novo pedido</button></div><div class="kanban" id="orders-board"></div></section>
+<section class="view" id="medicao"><div class="section-head"><div><h2>Medição / Conferência</h2><p>Pedidos aguardando medição. Sem medição aprovada, a produção fica bloqueada.</p></div></div><div class="panel"><div class="panel-head"><h3>Fila de medição</h3></div><div class="list" id="measurement-queue-static"></div></div></section>
+<section class="view" id="liberacao_tecnica"><div class="section-head"><div><h2>Liberação Técnica</h2><p>Somente pedidos com data de medição e conferência aprovadas podem seguir para o desenho técnico.</p></div></div><div class="panel"><div class="list" id="technical-release-list"><div class="empty">Carregando pedidos aptos para liberação técnica…</div></div></div></section>
+<section class="view" id="desenho"><div class="section-head"><div><h2>Desenho técnico</h2><p>Ordens de corte, medidas e desenhos vinculados aos pedidos liberados.</p></div></div><div class="panel"><p class="empty">Nenhum desenho técnico vinculado no momento.</p></div></section>
+<section class="view" id="producao"><div class="section-head"><div><h2>Produção</h2><p>Pedidos liberados para corte e fabricação.</p></div></div><div class="production-grid"><div class="panel"><div class="panel-head"><h3>Fila de produção</h3></div><div class="list" id="production-queue-static"></div></div><div class="panel"><div class="panel-head"><h3>Andamento</h3></div><div class="list" id="production-progress-list"></div></div></div></section>
+<section class="view" id="acabamento"><div class="section-head"><div><h2>Acabamento</h2><p>Polimento, detalhes e inspeção de qualidade.</p></div></div><div class="panel"><div class="list" id="finish-list"></div></div></section><section class="view" id="logistica"><div class="section-head"><div><h2>Carregamento / Logística</h2><p>Agendamento de transportes e entregas.</p></div></div><div class="panel"><div class="list" id="logistics-list"></div></div></section><section class="view" id="instalacao"><div class="section-head"><div><h2>Instalação</h2><p>Acompanhe as instalações programadas.</p></div></div><div class="panel"><div class="list" id="installation-list"></div></div></section><section class="view" id="clientes"><div class="section-head"><div><h2>Clientes</h2><p>Cadastro e histórico de clientes.</p></div><button class="primary" id="new-client">Novo cliente</button></div><div class="panel"><div class="list" id="clients-list"></div></div></section><section class="view" id="financeiro"><div class="section-head"><div><h2>Financeiro</h2><p>Contas a receber, parcelas e comissões.</p></div></div><div class="grid-2"><div class="panel"><div class="panel-head"><h3>Contas a receber</h3></div><div class="list" id="receivables-list"></div></div><div class="panel"><div class="panel-head"><h3>Resumo</h3></div><div class="cards" id="finance-metrics" style="grid-template-columns:1fr"></div></div></div></section><section class="view" id="estoque"><div class="section-head"><div><h2>Estoque</h2><p>Chapas, insumos, reservas e sobras.</p></div></div><div class="panel table-panel"><table><thead><tr><th>Material</th><th>Tipo</th><th>Quantidade</th><th>Unidade</th></tr></thead><tbody id="stock-table"></tbody></table></div></section>
+<section class="view" id="rh"><div class="section-head"><div><h2>RH / Administrativo</h2><p>Cadastros, permissões, produtividade e comissões de funcionários, prestadores e arquitetos.</p></div></div><div class="panel"><div class="list" id="hr-list"></div></div></section>
+<section class="view" id="documentos"><div class="section-head"><div><h2>Documentos</h2><p>Pedido, protocolo e termo de entrega em A4.</p></div></div><div class="doc-grid"></div></section><section class="view" id="assistente"><div class="section-head"><div><h2>Assistente</h2><p>Perguntas rápidas sobre a operação.</p></div></div><div class="panel assistant"><div class="assistant-msg"><p>Olá! Escolha uma opção para consultar a operação.</p></div><div class="quick-actions"><button data-assist="pedidos">Quantos pedidos em andamento?</button><button data-assist="medicao">Pedidos sem medição?</button><button data-assist="producao">Pedidos em produção?</button><button data-assist="financeiro">Resumo financeiro</button></div><div class="assistant-result" id="assistant-result">Selecione uma opção acima.</div></div></section><section class="view" id="configuracoes"><div class="section-head"><div><h2>Configurações</h2><p>Preferências e integrações do sistema.</p></div></div><div class="settings-grid"><div class="panel"><strong>Supabase</strong><span>Banco operacional conectado por variáveis de ambiente.</span></div><div class="panel"><strong>PWA</strong><span>Service worker ativo para recursos offline.</span></div><div class="panel"><strong>Dados locais</strong><span>Use apenas para cache auxiliar. Os dados oficiais ficam no Supabase.</span><button class="secondary" id="clear-local" style="margin-top:12px">Limpar cache local</button></div><div class="panel"><strong>Regras</strong><span>Produção exige medição aprovada. O fluxo não pode retroceder.</span></div></div></section></div>
+<div id="auth-user" class="auth-user"></div><script type="module" src="/auth.js"></script><script type="module" src="/app.js"></script><script type="module" src="/operacao.js"></script><script type="module" src="/documentos.js"></script><script type="module" src="/rh.js"></script>
+</body></html>
