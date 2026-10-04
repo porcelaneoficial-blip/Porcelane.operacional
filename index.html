@@ -36,6 +36,7 @@
 
     <div class="nav-group">
       <div class="nav-label">Operação</div>
+      <button class="nav-item technical-highlight" data-view="painel_tecnico" title="Painel técnico"><span class="nav-glyph">◈</span><span>Painel Técnico</span></button>
       <button class="nav-item" data-view="medicao" title="Medição e conferência"><span class="nav-glyph">⌁</span><span>Medição / Conferência</span></button>
       <button class="nav-item" data-view="liberacao_tecnica" title="Liberação técnica"><span class="nav-glyph">✓</span><span>Liberação Técnica</span></button>
       <button class="nav-item" data-view="desenho" title="Desenho técnico"><span class="nav-glyph">▧</span><span>Desenho técnico</span></button>
@@ -135,11 +136,89 @@
 
     <section class="view" id="pedidos"><div class="section-head"><div><div class="eyebrow">COMERCIAL · OPERAÇÃO</div><h2>Pedidos</h2><p>Fluxo operacional controlado pelo sistema.</p></div><button class="primary" id="new-order">Novo pedido</button></div><div class="kanban" id="orders-board"></div></section>
 
-    <section class="view" id="medicao"><div class="section-head"><div><div class="eyebrow">OPERAÇÃO</div><h2>Medição / Conferência</h2><p>Sem medição aprovada, a produção fica bloqueada.</p></div></div><div class="panel"><div class="panel-head"><h3>Fila de medição</h3></div><div class="list" id="measurement-queue-static"></div></div></section>
+    <section class="view" id="painel_tecnico">
+      <div class="section-head">
+        <div><div class="eyebrow">CENTRAL TÉCNICA</div><h2>Painel Técnico</h2><p>Acompanhe cada pedido da medição até a liberação para produção.</p></div>
+        <button class="secondary" data-view-link="medicao">Abrir fila de medição</button>
+      </div>
+      <div class="technical-summary">
+        <div class="metric"><span>Medidas pendentes</span><strong>03</strong><small>aguardando conferência</small></div>
+        <div class="metric"><span>Desenhos em revisão</span><strong>02</strong><small>precisam de validação</small></div>
+        <div class="metric"><span>Prontos para liberar</span><strong>04</strong><small>sem pendências técnicas</small></div>
+        <div class="metric metric-locked"><span>Bloqueados</span><strong>01</strong><small>faltando informação obrigatória</small></div>
+      </div>
+      <div class="technical-flow">
+        <div class="panel">
+          <div class="panel-head"><div><h3>Fluxo técnico</h3><p>Uma única ficha técnica acompanha o pedido.</p></div><span class="badge green">Controle ativo</span></div>
+          <div class="tech-steps">
+            <button class="tech-step done" data-view-link="medicao"><b>01</b><span>Medição</span><small>registrada e conferida</small></button>
+            <i>→</i>
+            <button class="tech-step done" data-view-link="medicao"><b>02</b><span>Conferência</span><small>medidas validadas</small></button>
+            <i>→</i>
+            <button class="tech-step current" data-view-link="desenho"><b>03</b><span>Desenho</span><small>revisão técnica</small></button>
+            <i>→</i>
+            <button class="tech-step" data-view-link="liberacao_tecnica"><b>04</b><span>Liberação</span><small>autorização para produção</small></button>
+          </div>
+        </div>
+      </div>
+      <div class="technical-grid">
+        <div class="panel panel-large">
+          <div class="panel-head"><div><h3>Pedidos em análise técnica</h3><p>Priorize o que pode travar a produção.</p></div><button class="link-btn">Ver ficha completa →</button></div>
+          <div class="technical-orders">
+            <button class="technical-order" data-view-link="medicao"><span class="order-number">#1024</span><span><b>João Silva · Casa Boa Vista</b><small>Medição 02/10 · 5 ambientes</small></span><em class="badge amber">Conferência</em><i>→</i></button>
+            <button class="technical-order" data-view-link="desenho"><span class="order-number">#1025</span><span><b>Maria Costa · Apartamento 804</b><small>Desenho técnico · revisão 02</small></span><em class="badge blue">Em revisão</em><i>→</i></button>
+            <button class="technical-order" data-view-link="liberacao_tecnica"><span class="order-number">#1026</span><span><b>Ana Martins · Residência Aldeia</b><small>Medição e desenho concluídos</small></span><em class="badge green">Pronto</em><i>→</i></button>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><div><h3>Regra de liberação</h3><p>Proteção da produção</p></div><span class="panel-icon">✓</span></div>
+          <div class="technical-rule"><strong>Produção bloqueada</strong><p>O pedido só pode ser liberado quando a <b>data de medição</b> estiver registrada e a conferência técnica estiver aprovada.</p><div class="rule-check"><span>✓</span> Data de medição registrada</div><div class="rule-check"><span>✓</span> Conferência aprovada</div><div class="rule-check pending"><span>○</span> Desenho técnico aprovado</div></div>
+        </div>
+      </div>
+    </section>
 
-    <section class="view" id="liberacao_tecnica"><div class="section-head"><div><div class="eyebrow">OPERAÇÃO</div><h2>Liberação Técnica</h2><p>Somente pedidos com medição e conferência aprovadas podem seguir.</p></div></div><div class="panel"><div class="list" id="technical-release-list"><div class="empty">Carregando pedidos aptos para liberação técnica…</div></div></div></section>
+    <section class="view" id="medicao">
+      <div class="section-head"><div><div class="eyebrow">TÉCNICA · 01</div><h2>Medição / Conferência</h2><p>Registre a visita, medidas, fotos e validações antes de liberar o pedido.</p></div><button class="primary">Nova medição</button></div>
+      <div class="technical-detail-grid">
+        <div class="panel">
+          <div class="panel-head"><div><h3>Fila de medição</h3><p>Pedidos aguardando coleta ou conferência</p></div><span class="badge amber">03 pendentes</span></div>
+          <div class="technical-orders">
+            <button class="technical-order selected"><span class="order-number">#1024</span><span><b>João Silva</b><small>Casa Boa Vista · Cozinha + Gourmet</small></span><em class="badge amber">Aguardando</em><i>›</i></button>
+            <button class="technical-order"><span class="order-number">#1027</span><span><b>Carla Mendes</b><small>Residencial Porto · 3 ambientes</small></span><em class="badge amber">Agendada</em><i>›</i></button>
+            <button class="technical-order"><span class="order-number">#1028</span><span><b>Lucas Rocha</b><small>Casa Praia · Banheiros</small></span><em class="badge green">Conferida</em><i>›</i></button>
+          </div>
+        </div>
+        <div class="panel technical-record">
+          <div class="record-top"><span class="badge amber">Em conferência</span><span>Pedido #1024</span></div>
+          <h3>Casa Boa Vista</h3><p class="record-client">João Silva · 5 ambientes</p>
+          <div class="record-grid"><div><small>Data da medição</small><strong>02/10/2026</strong></div><div><small>Responsável</small><strong>Equipe técnica</strong></div><div><small>Ambientes</small><strong>05</strong></div><div><small>Fotos</small><strong>18 anexos</strong></div></div>
+          <div class="checklist"><div class="check done">✓ Medidas coletadas</div><div class="check done">✓ Níveis conferidos</div><div class="check done">✓ Fotos anexadas</div><div class="check pending">○ Conferir pontos hidráulicos</div></div>
+          <button class="secondary full-width">Abrir ficha de medição</button>
+        </div>
+      </div>
+    </section>
 
-    <section class="view" id="desenho"><div class="section-head"><div><div class="eyebrow">OPERAÇÃO</div><h2>Desenho técnico</h2><p>Ordens de corte, medidas e desenhos vinculados aos pedidos liberados.</p></div></div><div class="panel"><p class="empty">Nenhum desenho técnico vinculado no momento.</p></div></section>
+    <section class="view" id="liberacao_tecnica">
+      <div class="section-head"><div><div class="eyebrow">TÉCNICA · 04</div><h2>Liberação Técnica</h2><p>Última conferência antes de o pedido entrar na produção.</p></div></div>
+      <div class="release-layout">
+        <div class="panel">
+          <div class="panel-head"><div><h3>Pedidos prontos</h3><p>Somente pedidos sem pendências críticas aparecem aqui.</p></div></div>
+          <div class="technical-orders"><button class="technical-order"><span class="order-number">#1026</span><span><b>Ana Martins</b><small>Residência Aldeia · desenho rev. 03</small></span><em class="badge green">Apto</em><i>→</i></button><button class="technical-order"><span class="order-number">#1029</span><span><b>Paulo Reis</b><small>Casa Tamarineira · desenho rev. 01</small></span><em class="badge green">Apto</em><i>→</i></button></div>
+        </div>
+        <div class="panel release-card"><span class="release-lock">✓</span><h3>Checklist de liberação</h3><div class="release-check done"><span>✓</span><div><b>Data de medição</b><small>Registrada</small></div></div><div class="release-check done"><span>✓</span><div><b>Conferência</b><small>Aprovada</small></div></div><div class="release-check done"><span>✓</span><div><b>Desenho técnico</b><small>Aprovado</small></div></div><button class="primary full-width">Liberar para produção</button><small class="release-warning">Ao liberar, o pedido entra oficialmente na fila de produção.</small></div>
+      </div>
+    </section>
+
+    <section class="view" id="desenho">
+      <div class="section-head"><div><div class="eyebrow">TÉCNICA · 03</div><h2>Desenho Técnico</h2><p>Peças, cotas, recortes e revisões ligados diretamente ao pedido.</p></div><button class="primary">Novo desenho</button></div>
+      <div class="drawing-layout">
+        <div class="panel">
+          <div class="panel-head"><div><h3>Desenhos em andamento</h3><p>Controle por pedido e revisão.</p></div></div>
+          <div class="drawing-list"><button class="drawing-row"><span class="drawing-icon">▧</span><span><b>#1025 · Apartamento 804</b><small>Revisão 02 · 8 peças · 3 recortes</small></span><em class="badge blue">Em revisão</em></button><button class="drawing-row"><span class="drawing-icon">▧</span><span><b>#1026 · Residência Aldeia</b><small>Revisão 03 · 12 peças · 4 recortes</small></span><em class="badge green">Aprovado</em></button><button class="drawing-row"><span class="drawing-icon">▧</span><span><b>#1029 · Casa Tamarineira</b><small>Revisão 01 · 6 peças · 2 recortes</small></span><em class="badge amber">Aguardando</em></button></div>
+        </div>
+        <div class="panel drawing-preview"><div class="drawing-sheet"><span>DESENHO TÉCNICO</span><strong>#1026</strong><div class="drawing-lines"><i></i><i></i><i></i></div><small>Peça B-04 · Bancada cozinha</small></div><div class="drawing-meta"><div><small>Material</small><b>Quartzo</b></div><div><small>Espessura</small><b>20 mm</b></div><div><small>Acabamento</small><b>Meia esquadria</b></div><div><small>Recortes</small><b>2</b></div></div></div>
+      </div>
+    </section>
 
     <section class="view" id="producao"><div class="section-head"><div><div class="eyebrow">OPERAÇÃO</div><h2>Produção</h2><p>Pedidos liberados para corte e fabricação.</p></div></div><div class="production-grid"><div class="panel"><div class="panel-head"><h3>Fila de produção</h3></div><div class="list" id="production-queue-static"></div></div><div class="panel"><div class="panel-head"><h3>Andamento</h3></div><div class="list" id="production-progress-list"></div></div></div></section>
 
