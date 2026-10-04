@@ -10,9 +10,47 @@
 <title>PORCELANE</title>
 <meta property="og:image" content="https://bolt.new/static/og_default.png"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="https://bolt.new/static/og_default.png">
 </head><body>
-<aside class="sidebar"><div class="brand"><div class="brand-mark">P</div><div><strong>PORCELANE</strong><small>OPERAÇÃO</small></div></div><nav>
-<button class="nav-item" data-view="dashboard">Visão geral</button><button class="nav-item" data-view="orcamentos">Orçamentos</button><button class="nav-item" data-view="pedidos">Pedidos</button><button class="nav-item" data-view="medicao">Medição / Conferência</button><button class="nav-item" data-view="liberacao_tecnica">Liberação Técnica</button><button class="nav-item" data-view="desenho">Desenho técnico</button><button class="nav-item" data-view="producao">Produção</button><button class="nav-item" data-view="acabamento">Acabamento</button><button class="nav-item" data-view="logistica">Carregamento / Logística</button><button class="nav-item" data-view="instalacao">Instalação</button><button class="nav-item" data-view="clientes">Clientes</button><button class="nav-item" data-view="financeiro">Financeiro</button><button class="nav-item" data-view="estoque">Estoque</button><button class="nav-item" data-view="rh">RH / Administrativo</button><button class="nav-item" data-view="documentos">Documentos</button><button class="nav-item" data-view="assistente">Assistente</button><button class="nav-item" data-view="configuracoes">Configurações</button>
-</nav><div class="sidebar-footer"><span>PORCELANE · PETRA</span><br/>Gestão para marmorarias</div></aside>
+<aside class="sidebar" aria-label="Navegação principal">
+  <div class="brand">
+    <div class="brand-mark">P</div>
+    <div><strong>PORCELANE</strong><small>OPERAÇÃO</small></div>
+  </div>
+  <nav>
+    <div class="nav-group">
+      <div class="nav-label">Principal</div>
+      <button class="nav-item" data-view="dashboard" title="Visão geral"><span class="nav-glyph">⌂</span><span>Visão geral</span></button>
+    </div>
+    <div class="nav-group">
+      <div class="nav-label">Comercial</div>
+      <button class="nav-item" data-view="orcamentos" title="Orçamentos"><span class="nav-glyph">◫</span><span>Orçamentos</span></button>
+      <button class="nav-item" data-view="pedidos" title="Pedidos"><span class="nav-glyph">◇</span><span>Pedidos</span></button>
+      <button class="nav-item" data-view="clientes" title="Clientes"><span class="nav-glyph">○</span><span>Clientes</span></button>
+    </div>
+    <div class="nav-group">
+      <div class="nav-label">Produção</div>
+      <button class="nav-item" data-view="medicao" title="Medição e conferência"><span class="nav-glyph">⌁</span><span>Medição / Conferência</span></button>
+      <button class="nav-item" data-view="liberacao_tecnica" title="Liberação técnica"><span class="nav-glyph">✓</span><span>Liberação Técnica</span></button>
+      <button class="nav-item" data-view="desenho" title="Desenho técnico"><span class="nav-glyph">▧</span><span>Desenho técnico</span></button>
+      <button class="nav-item" data-view="producao" title="Produção"><span class="nav-glyph">▤</span><span>Produção</span></button>
+      <button class="nav-item" data-view="acabamento" title="Acabamento"><span class="nav-glyph">◇</span><span>Acabamento</span></button>
+      <button class="nav-item" data-view="logistica" title="Carregamento e logística"><span class="nav-glyph">→</span><span>Carregamento / Logística</span></button>
+      <button class="nav-item" data-view="instalacao" title="Instalação"><span class="nav-glyph">⌖</span><span>Instalação</span></button>
+    </div>
+    <div class="nav-group">
+      <div class="nav-label">Gestão</div>
+      <button class="nav-item" data-view="financeiro" title="Financeiro"><span class="nav-glyph">R$</span><span>Financeiro</span></button>
+      <button class="nav-item" data-view="estoque" title="Estoque"><span class="nav-glyph">▦</span><span>Estoque</span></button>
+      <button class="nav-item" data-view="rh" title="RH e administrativo"><span class="nav-glyph">♙</span><span>RH / Administrativo</span></button>
+      <button class="nav-item" data-view="documentos" title="Documentos"><span class="nav-glyph">□</span><span>Documentos</span></button>
+    </div>
+    <div class="nav-group nav-group-last">
+      <div class="nav-label">Apoio</div>
+      <button class="nav-item" data-view="assistente" title="Assistente"><span class="nav-glyph">✦</span><span>Assistente</span></button>
+      <button class="nav-item" data-view="configuracoes" title="Configurações"><span class="nav-glyph">⚙</span><span>Configurações</span></button>
+    </div>
+  </nav>
+  <div class="sidebar-footer"><span>PORCELANE · OPERAÇÃO</span><br/>Gestão para marmorarias</div>
+</aside>
 <div class="main"><div class="topbar"><div><div class="eyebrow">PORCELANE</div><h1 id="page-title">Visão geral</h1></div><div class="top-actions"><span class="status-dot">● Sistema operacional</span></div></div>
 <section class="view active-view" id="dashboard"><div class="hero"><div><div class="eyebrow">Bem-vindo</div><h2>Visão geral da operação</h2><p>Acompanhe pedidos, produção e instalações em tempo real.</p></div><div class="hero-date" id="today"></div></div><div class="cards" id="dashboard-metrics"></div><div class="grid-2"><div class="panel"><div class="panel-head"><h3>Pedidos recentes</h3><button class="link-btn" data-view-link="pedidos">Ver todos</button></div><div class="list" id="recent-orders"></div></div><div class="panel"><div class="panel-head"><h3>Pipeline operacional</h3></div><div class="pipeline"><span>Pedido</span><b>→</b><span>Conferência</span><b>→</b><span>Liberação Técnica</span><b>→</b><span>Desenho</span><b>→</b><span>Produção</span><b>→</b><span>Instalação</span></div><p class="empty" style="margin-top:18px">Sem medição registrada e aprovada, a liberação técnica e a produção permanecem bloqueadas.</p></div></div></section>
 <section class="view" id="orcamentos"><div class="section-head"><div><h2>Orçamentos</h2><p>Elabore e acompanhe propostas comerciais.</p></div><button class="primary" id="new-budget">Novo orçamento</button></div><div class="panel table-panel"><table><thead><tr><th>Nº</th><th>Cliente</th><th>Obra</th><th>M²</th><th>Valor</th><th>Status</th></tr></thead><tbody id="budgets-table"><tr><td colspan="6" class="empty">Nenhum orçamento cadastrado. Clique em "Novo orçamento".</td></tr></tbody></table></div></section>
