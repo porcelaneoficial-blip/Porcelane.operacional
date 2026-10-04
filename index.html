@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <meta name="theme-color" content="#171716"/>
-<meta name="description" content="PORCELANE — gestão operacional para marmorarias"/>
+<meta name="description" content="PORCELANE — workspace operacional profissional, preparado para crescer com a plataforma FERRAZ"/>
 <link rel="manifest" href="/manifest.webmanifest"/>
 <link rel="stylesheet" href="/styles.css"/>
 <title>PORCELANE · Operação</title>
@@ -18,7 +18,8 @@
 
   <div class="workspace-pill">
     <span class="workspace-dot"></span>
-    <span><b>Operação</b><small>Ambiente principal</small></span>
+    <span><b>Porcelane</b><small>Workspace · Marmoraria</small></span>
+    <em>PRO</em>
   </div>
 
   <nav>
@@ -62,15 +63,15 @@
   </nav>
 
   <div class="sidebar-footer">
-    <span>PORCELANE · OPERAÇÃO</span>
-    <small>Gestão para marmorarias</small>
+    <span>PORCELANE · WORKSPACE</span>
+    <small>Uma operação da plataforma FERRAZ</small>
   </div>
 </aside>
 
 <div class="main">
   <header class="topbar">
     <div class="page-context">
-      <div class="eyebrow">PORCELANE · OPERAÇÃO</div>
+      <div class="eyebrow">PORCELANE · WORKSPACE</div>
       <h1 id="page-title">Visão geral</h1>
     </div>
     <div class="top-actions">
@@ -236,7 +237,27 @@
 
     <section class="view" id="rh"><div class="section-head"><div><div class="eyebrow">GESTÃO</div><h2>RH / Administrativo</h2><p>Cadastros, permissões, produtividade e comissões.</p></div></div><div class="panel"><div class="list" id="hr-list"></div></div></section>
 
-    <section class="view" id="documentos"><div class="section-head"><div><div class="eyebrow">GESTÃO</div><h2>Documentos</h2><p>Pedido, protocolo e termo de entrega em A4.</p></div></div><div class="doc-grid"></div></section>
+    <section class="view" id="documentos">
+  <div class="section-head"><div><div class="eyebrow">GESTÃO · DOCUMENTOS</div><h2>Central de documentos</h2><p>Uma biblioteca de documentos com identidade consistente, pronta para crescer com novos modelos e nichos.</p></div><button class="secondary">Novo modelo</button></div>
+  <div class="document-hero">
+    <div><span class="eyebrow">SISTEMA DE DOCUMENTOS</span><h3>Documentos que parecem parte do produto — porque são.</h3><p>Modelos comerciais, técnicos e operacionais seguem uma mesma linguagem visual e podem evoluir sem alterar a operação.</p></div>
+    <div class="document-hero-mark">A4</div>
+  </div>
+  <div class="document-family-grid">
+    <button class="document-family"><span class="document-family-icon">01</span><strong>Comercial</strong><small>Orçamento · proposta · pedido · recibo</small><em>4 modelos</em></button>
+    <button class="document-family"><span class="document-family-icon">02</span><strong>Técnico</strong><small>Medição · conferência · desenho · liberação</small><em>4 modelos</em></button>
+    <button class="document-family"><span class="document-family-icon">03</span><strong>Produção</strong><small>Ordem de corte · acabamento · inspeção</small><em>3 modelos</em></button>
+    <button class="document-family"><span class="document-family-icon">04</span><strong>Logística</strong><small>Romaneio · entrega · instalação · termo</small><em>4 modelos</em></button>
+  </div>
+  <div class="document-workspace">
+    <div class="panel"><div class="panel-head"><div><h3>Últimos documentos</h3><p>Documentos gerados e vinculados aos pedidos.</p></div><button class="link-btn">Ver biblioteca →</button></div><div class="list">
+      <div class="list-row"><span><b>ORÇAMENTO · #1026</b><small>Cliente Ana Martins · versão 03</small></span><span>Comercial</span><span class="badge green">Pronto</span></div>
+      <div class="list-row"><span><b>FICHA DE MEDIÇÃO · #1024</b><small>Casa Boa Vista · 02/10/2026</small></span><span>Técnico</span><span class="badge blue">Vinculado</span></div>
+      <div class="list-row"><span><b>ORDEM DE PRODUÇÃO · #1026</b><small>Gerada após liberação técnica</small></span><span>Produção</span><span class="badge green">Liberada</span></div>
+    </div></div>
+    <div class="panel document-principles"><div class="panel-head"><div><h3>Padrão Ferraz</h3><p>Base visual reutilizável</p></div><span class="panel-icon">✦</span></div><div class="principle"><b>Identidade</b><span>Marca, tipografia e assinatura visual consistentes.</span></div><div class="principle"><b>Estrutura</b><span>Campos dinâmicos sem espaços vazios desnecessários.</span></div><div class="principle"><b>Histórico</b><span>Versão, pedido e origem do documento sempre rastreáveis.</span></div><div class="principle"><b>Expansão</b><span>Novos nichos podem receber seus próprios modelos.</span></div></div>
+  </div>
+</section>
 
     <section class="view" id="assistente"><div class="section-head"><div><div class="eyebrow">APOIO</div><h2>Assistente</h2><p>Perguntas rápidas sobre a operação.</p></div></div><div class="panel assistant"><div class="assistant-msg"><p>Olá! Escolha uma opção para consultar a operação.</p></div><div class="quick-actions"><button data-assist="pedidos">Quantos pedidos em andamento?</button><button data-assist="medicao">Pedidos sem medição?</button><button data-assist="producao">Pedidos em produção?</button><button data-assist="financeiro">Resumo financeiro</button></div><div class="assistant-result" id="assistant-result">Selecione uma opção acima.</div></div></section>
 
